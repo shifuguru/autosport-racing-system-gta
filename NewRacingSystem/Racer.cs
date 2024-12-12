@@ -14,7 +14,6 @@ namespace ARS
     }
     public class Racer
     {
-
         public Team team = Team.None;
         public VehicleControl vControl = new VehicleControl(); //Inputs for throttle(reverse), brake, steer and handbrake
         public Memory mem = new Memory(); //Holds live data about the track, other opponents nearby and its own personality        
@@ -71,7 +70,7 @@ namespace ARS
         {
             Car = RacerCar;
             Driver = RacerPed;
-            Name = RacerCar.FriendlyName;
+            Name = RacerCar.LocalizedName;
             if (Name == "NULL" || Name == null) Name = Car.DisplayName.ToString()[0].ToString().ToUpper() + Car.DisplayName.ToString().Substring(1).ToLowerInvariant();
 
             if (Driver.IsPlayer) ControlledByPlayer = true;
@@ -82,27 +81,27 @@ namespace ARS
 
                 Driver.BlockPermanentEvents = true;
                 Driver.AlwaysKeepTask = true;
-                Function.Call(GTA.Native.Hash.SET_DRIVER_ABILITY, Driver, 1f);
-                Function.Call(GTA.Native.Hash.SET_DRIVER_AGGRESSIVENESS, Driver, 100f);
+                Function.Call(Hash.SET_DRIVER_ABILITY, Driver, 1f);
+                Function.Call(Hash.SET_DRIVER_AGGRESSIVENESS, Driver, 100f);
 
                 if (ARS.DevSettingsFile.GetValue<int>("RACERS", "AIRacerAutofix", 1) == 2)
                 {
-                    Function.Call(GTA.Native.Hash.SET_ENTITY_PROOFS, Car, true, true, true, true, true, true, true, true);
-                    Function.Call(GTA.Native.Hash.SET_ENTITY_PROOFS, Driver, true, true, true, true, true, true, true, true);
+                    Function.Call(Hash.SET_ENTITY_PROOFS, Car, true, true, true, true, true, true, true, true);
+                    Function.Call(Hash.SET_ENTITY_PROOFS, Driver, true, true, true, true, true, true, true, true);
 
                     Car.IsInvincible = true;
                     Car.IsCollisionProof = true;
                     Car.IsOnlyDamagedByPlayer = true;
-                    Function.Call(GTA.Native.Hash.SET_VEHICLE_STRONG, Car, true);
-                    Function.Call(GTA.Native.Hash.SET_VEHICLE_HAS_STRONG_AXLES, Car, true);
-                    Car.EngineCanDegrade = false;
+                    Function.Call(Hash.SET_VEHICLE_STRONG, Car, true);
+                    Function.Call(Hash.SET_VEHICLE_HAS_STRONG_AXLES, Car, true);
+                    Car.CanEngineDegrade = false;
 
                 }
                 else if (ARS.DevSettingsFile.GetValue<int>("RACERS", "AIRacerAutofix", 1) == 1)
                 {
-                    Function.Call(GTA.Native.Hash.SET_VEHICLE_STRONG, Car, true);
-                    Function.Call(GTA.Native.Hash.SET_VEHICLE_HAS_STRONG_AXLES, Car, true);
-                    Car.EngineCanDegrade = false;
+                    Function.Call(Hash.SET_VEHICLE_STRONG, Car, true);
+                    Function.Call(Hash.SET_VEHICLE_HAS_STRONG_AXLES, Car, true);
+                    Car.CanEngineDegrade = false;
                 }
                 else
                 {
@@ -110,26 +109,26 @@ namespace ARS
                     Car.IsCollisionProof = false;
                 }
 
-                Car.EngineRunning = true;
+                Car.IsEngineRunning = true;
                 ARS.SetBrakes(Car, 0f);
                 Driver.SetIntoVehicle(Car, VehicleSeat.Driver);
                 Car.IsRadioEnabled = false;
             }
 
             Car.IsPersistent = true;
-            if ((Car.CurrentBlip == null || Car.CurrentBlip.Exists() == false) && !Driver.IsPlayer)
+            if ((Car.AttachedBlip == null || Car.AttachedBlip.Exists() == false) && !Driver.IsPlayer)
             {
                 Car.AddBlip();
-                Car.CurrentBlip.Color = BlipColor.Blue;
-                Car.CurrentBlip.Scale = 0.75f;
-                Function.Call(Hash._SET_BLIP_SHOW_HEADING_INDICATOR, Car.CurrentBlip, true);
-                Function.Call(Hash._0x2B6D467DAB714E8D, Car.CurrentBlip, true);
-                Car.CurrentBlip.Name = Name;
+                Car.AttachedBlip.Color = BlipColor.Blue;
+                Car.AttachedBlip.Scale = 0.75f;
+                Function.Call(Hash.SET_BLIP_SHOW_CONE, Car.AttachedBlip, true);
+                Function.Call(Hash.SET_BLIP_AS_MINIMAL_ON_EDGE, Car.AttachedBlip, true);
+                Car.AttachedBlip.Name = Name;
             }
 
-            Function.Call(GTA.Native.Hash._0x0DC7CABAB1E9B67E, Car, true, 1);
-            Function.Call(GTA.Native.Hash._0x0DC7CABAB1E9B67E, Driver, true, 1);
-            Function.Call(GTA.Native.Hash.SET_ENTITY_PROOFS, Driver, true, true, true, false, true, true, 1, true);
+            Function.Call(Hash.SET_ENTITY_LOAD_COLLISION_FLAG, Car, true, 1);
+            Function.Call(Hash.SET_ENTITY_LOAD_COLLISION_FLAG, Driver, true, 1);
+            Function.Call(Hash.SET_ENTITY_PROOFS, Driver, true, true, true, false, true, true, 1, true);
 
             Driver.MaxHealth = 1000;
             Driver.Health = 1000;
@@ -364,7 +363,7 @@ namespace ARS
             LapStartTime = Game.GameTime;
             vControl.HandBrakeTime = 0;
             vControl.MaxThrottle = 1f;
-            if (team == Team.Cop) Car.SirenActive = true;
+            if (team == Team.Cop) Car.IsSirenActive = true;
         }
 
         /// <summary>
@@ -843,11 +842,11 @@ namespace ARS
             //To avoid vanilla contact-swerves, sit the driver on the passenger seat if there's a potential colission. Also try and fix the helmet
             if (Car.Model.IsCar && !Driver.IsPlayer)
             {
-                if (NearbyRivals.Any() && Car.IsInRangeOf(NearbyRivals.First().Car.Position, 5f))
+                if (NearbyRivals.Any() && Car.IsInRange(NearbyRivals.First().Car.Position, 5f))
                 {
                     if (Driver.IsInVehicle(Car) && Car.IsSeatFree(VehicleSeat.RightFront))
                     {
-                        Driver.Alpha = 0;
+                        Driver.Opacity = 0;
                         Driver.SetIntoVehicle(Car, VehicleSeat.RightFront);
                     }
                 }
@@ -855,27 +854,27 @@ namespace ARS
                 {
                     if (Driver.IsInVehicle(Car) && Car.IsSeatFree(VehicleSeat.Driver))
                     {
-                        Driver.Alpha = 255;
+                        Driver.Opacity = 255;
                         Driver.SetIntoVehicle(Car, VehicleSeat.Driver);
 
                         Driver.CanWearHelmet = true;
-                        Driver.GiveHelmet(true, HelmetType.RegularMotorcycleHelmet, 0);
+                        Driver.GiveHelmet(true, Helmet.RegularMotorcycleHelmet, 0);
                         Driver.RemoveHelmet(true);
                     }
                 }
             }
 
             //Ghosting
-            if (Car.Alpha != 255) Car.ResetAlpha();
+            if (Car.Opacity != 255) Car.ResetOpacity();
             if (ARS.SettingsFile.GetValue<bool>("GENERAL_SETTINGS", "Ghosts", false) && NearbyRivals.Any())
             {
                 foreach (Racer r in NearbyRivals)
                 {
                     //if (Function.Call<bool>(Hash.IS_ENTITY_AT_ENTITY, Car, r.Car, (r.Car.Model.GetDimensions().X * 1.5f), (r.Car.Model.GetDimensions().Y * 1.5f), (r.Car.Model.GetDimensions().Z * 1.5f), true, true, true))
-                    if (Car.IsInRangeOf(r.Car.Position, 6))
+                    if (Car.IsInRange(r.Car.Position, 6))
                     {
                         Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, r.Car, Car, true);
-                        Car.Alpha = 150;
+                        Car.Opacity = 150;
                     }
                 }
             }
@@ -902,7 +901,7 @@ namespace ARS
             //AI Inputs
             if (Driver.IsSittingInVehicle(Car) && !Driver.IsPlayer)
             {
-                if (vControl.HandBrakeTime > Game.GameTime) Car.HandbrakeOn = true; else Car.HandbrakeOn = false;
+                if (vControl.HandBrakeTime > Game.GameTime) Car.IsHandbrakeForcedOn = true; else Car.IsHandbrakeForcedOn = false;
 
                 ARS.SetThrottle(Car, vControl.Throttle);
                 ARS.SetBrakes(Car, vControl.Brake);
@@ -920,7 +919,7 @@ namespace ARS
         void DrawStuff()
         {
 
-            if (!Car.IsInRangeOf(Game.Player.Character.Position, 100)) return;
+            if (!Car.IsInRange(Game.Player.Character.Position, 100)) return;
 
             //Future 
             Vector3 projected = Car.Position;
@@ -950,7 +949,7 @@ namespace ARS
                     if (PartTimeNodes.Contains(trackPoint.Node))
                     {
                         TimeSpan lapTime = ARS.ParseToTimeSpan(Game.GameTime - LapStartTime);
-                       UI.Notify("Part Time (" + Math.Round((ARS.GetPercent(trackPoint.Node, ARS.TrackPoints.Count))) + "%)~n~~b~" + lapTime.ToString("m':'ss'.'fff"));
+                        GTA.UI.Notification.Show("Part Time (" + Math.Round((ARS.GetPercent(trackPoint.Node, ARS.TrackPoints.Count))) + "%)~n~~b~" + lapTime.ToString("m':'ss'.'fff"));
 
                     }
                 }
@@ -961,7 +960,7 @@ namespace ARS
             {
 
                 //Center of Gs
-                World.DrawMarker(MarkerType.DebugSphere, Car.Position + new Vector3(0, 0, (Car.Model.GetDimensions().Z * 0.6f)), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.1f, 0.1f, 0.1f), Color.Green, false, false, 0, false, "", "", false);
+                World.DrawMarker(MarkerType.DebugSphere, Car.Position + new Vector3(0, 0, (Car.Model.Dimensions.frontTopRight.Z * 0.6f)), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.1f, 0.1f, 0.1f), Color.Green, false, false, false, "", "", false);
 
                 //Gs
                 Vector3 avgGs = vehData.AccelerationVector.Aggregate(new Vector3(0, 0, 0), (s, v) => s + v) / (float)vehData.AccelerationVector.Count;
@@ -970,8 +969,8 @@ namespace ARS
                 float colorPercent = ARS.map(avgGs.Length() / 9.8f, 0, vehData.CurrentGrip, 0, 100, true);
                 Color gColor = ARS.GradientAtoBtoC(Color.White, Color.Yellow, Color.Red, colorPercent);
 
-                World.DrawMarker(MarkerType.DebugSphere, Car.Position + new Vector3(0, 0, (Car.Model.GetDimensions().Z * 0.6f)) + (avgGs / 9.8f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.15f, 0.15f, 0.15f), gColor, false, false, 0, false, "", "", false);
-                ARS.DrawLine(Car.Position + new Vector3(0, 0, (Car.Model.GetDimensions().Z * 0.6f)) + (avgGs / 9.8f), Car.Position + new Vector3(0, 0, (Car.Model.GetDimensions().Z * 0.6f)), gColor);
+                World.DrawMarker(MarkerType.DebugSphere, Car.Position + new Vector3(0, 0, (Car.Model.Dimensions.frontTopRight.Z * 0.6f)) + (avgGs / 9.8f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.15f, 0.15f, 0.15f), gColor, false, false, false, "", "", false);
+                ARS.DrawLine(Car.Position + new Vector3(0, 0, (Car.Model.Dimensions.frontTopRight.Z * 0.6f)) + (avgGs / 9.8f), Car.Position + new Vector3(0, 0, (Car.Model.Dimensions.frontTopRight.Z * 0.6f)), gColor);
 
 
                 Vector3 maxValues = new Vector3(vehData.CurrentGrip * 9.8f, vehData.CurrentGrip * 9.8f, vehData.CurrentGrip * 9.8f);
@@ -993,7 +992,7 @@ namespace ARS
                 //ARS.DrawLine(Car.Position, visualSteerPoint, Color.Red);
                 //World.DrawMarker(MarkerType.DebugSphere, visualSteerPoint, Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.15f, 0.15f, 0.15f), Color.Red, false, false, 0, false, "", "", false);
 
-                Vector3 source = Car.Position + new Vector3(0, 0, 0.5f + (Car.Model.GetDimensions().Z * 0.6f));
+                Vector3 source = Car.Position + new Vector3(0, 0, 0.5f + (Car.Model.Dimensions.frontTopRight.Z * 0.6f));
                 ARS.DrawText(source, "~b~" + Math.Round(ARS.MStoMPH(Car.Velocity.Length())).ToString() + "~w~mph~n~~y~" + Math.Round(avgGs.Length() / 9.8f, 2) + "Gs", Color.White, 0.5f);
 
 
@@ -1002,7 +1001,7 @@ namespace ARS
             if (!Driver.IsPlayer)
             {
 
-                if (!Car.IsInRangeOf(Game.Player.Character.Position, 250f)) return;
+                if (!Car.IsInRange(Game.Player.Character.Position, 250f)) return;
 
                 //ARS.DrawText(Car.Position + new Vector3(0, 0, 2), vehData.Understeer + "º", Color.SkyBlue, 0.5f);
 
@@ -1016,10 +1015,10 @@ namespace ARS
 
                 }
                 */
-                if (ARS.OptionValuesList[Options.ShowAggro] && !Driver.IsPlayer && Driver.IsInRangeOf(Game.Player.Character.Position, 100f))
+                if (ARS.OptionValuesList[Options.ShowAggro] && !Driver.IsPlayer && Driver.IsInRange(Game.Player.Character.Position, 100f))
                 {
-                    if (Decisions.Any()) World.DrawMarker(MarkerType.ChevronUpx2, Car.Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), ARS.GetColorFromRedYellowGreenGradient(100 - (mem.intention.Aggression * 100)), false, true, 0, false, "", "", false);
-                    else World.DrawMarker(MarkerType.ChevronUpx1, Car.Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), ARS.GetColorFromRedYellowGreenGradient(100 - (mem.intention.Aggression * 100)), false, true, 0, false, "", "", false);
+                    if (Decisions.Any()) World.DrawMarker(MarkerType.ChevronUpx2, Car.Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), ARS.GetColorFromRedYellowGreenGradient(100 - (mem.intention.Aggression * 100)), false, true, false, "", "", false);
+                    else World.DrawMarker(MarkerType.ChevronUpx1, Car.Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), ARS.GetColorFromRedYellowGreenGradient(100 - (mem.intention.Aggression * 100)), false, true, false, "", "", false);
                 }
 
                 if (Decisions.Any() && ARS.OptionValuesList[Options.ShowInputs])
@@ -1082,19 +1081,19 @@ namespace ARS
                     Vector3 back = Car.ForwardVector;
                     back.Z = velocity.Z;
 
-                    Vector3 Dimensions = Car.Model.GetDimensions();
+                    Vector3 Dimensions = Car.Model.Dimensions.frontTopRight;
                     Vector3 inputplace = Car.Position + new Vector3(0, 0, -Car.HeightAboveGround);// new Vector3(0, 0, (Dimensions.Z * 0.6f));
                     Vector3 steergoal = Quaternion.RotationAxis(Vector3.WorldUp, (float)(Math.PI / 180f) * mem.data.SteerAngle) * -Car.ForwardVector; // Quaternion.RotationAxis takes radian angles                                                                                                                                                 
                     Vector3 idealsteergoal = Quaternion.RotationAxis(Vector3.WorldUp, (float)(Math.PI / 180f) * vControl.SteerTrack) * -Car.ForwardVector; // Quaternion.RotationAxis takes radian angles
 
-                    float dimension = Car.Model.GetDimensions().Y + 1f;
+                    float dimension = Car.Model.Dimensions.frontTopRight.Y + 1f;
 
                     if (vControl.Brake != 0f || true)
                     {
                         Vector3 inputBrake = inputplace + (Car.ForwardVector * -(Dimensions.Y * 0.5f));
                         Color c = Color.Red;
                         int alpha = (int)ARS.map(vControl.Brake, 0, 1f, 0, 255, true);
-                        World.DrawMarker(MarkerType.ChevronUpx1, inputBrake, Car.ForwardVector, new Vector3(-90, 0, 0), new Vector3(dimension / 2, dimension / 4, (dimension / 2)), Color.FromArgb(alpha, c), false, false, 0, false, "", "", false);
+                        World.DrawMarker(MarkerType.ChevronUpx1, inputBrake, Car.ForwardVector, new Vector3(-90, 0, 0), new Vector3(dimension / 2, dimension / 4, (dimension / 2)), Color.FromArgb(alpha, c), false, false, false, "", "", false);
                     }
 
                     if (vControl.Throttle != 0f || true)
@@ -1103,13 +1102,13 @@ namespace ARS
                         Color c = Color.GreenYellow;
                         int alpha = (int)ARS.map(vControl.Throttle, 0, 1, 0, 255, true);
                         //World.DrawMarker(MarkerType.ChevronUpx1, inputThrottle, -Car.ForwardVector, new Vector3(90, vControl.SteerAngle(), 0), new Vector3(dimension / 2, dimension / 4, -(dimension / 2)), Color.FromArgb(alpha, c), false, false, 0, false, "", "", false);
-                        World.DrawMarker(MarkerType.ChevronUpx1, inputThrottle, -Car.ForwardVector, new Vector3(90, vControl.SteerCurrent, 0), new Vector3(dimension / 2, dimension / 4, -(dimension / 2)), Color.FromArgb(alpha, c), false, false, 0, false, "", "", false);
+                        World.DrawMarker(MarkerType.ChevronUpx1, inputThrottle, -Car.ForwardVector, new Vector3(90, vControl.SteerCurrent, 0), new Vector3(dimension / 2, dimension / 4, -(dimension / 2)), Color.FromArgb(alpha, c), false, false, false, "", "", false);
                     }
                 }
 
                 if (ARS.OptionValuesList[Options.ShowTrackAnalysis])
                 {
-                    Vector3 source = Car.Position + new Vector3(0, 0, 0.5f + (Car.Model.GetDimensions().Z * 0.6f));
+                    Vector3 source = Car.Position + new Vector3(0, 0, 0.5f + (Car.Model.Dimensions.frontTopRight.Z * 0.6f));
                     //ARS.DrawText(source, "~b~" + Math.Round(ARS.MStoMPH(Car.Velocity.Length())).ToString() + "~w~mph~n~~y~" + Math.Round(avgGs.Length() / 9.8f, 2) + "Gs", Color.White, 0.5f);
 
 
@@ -1131,7 +1130,7 @@ namespace ARS
 
                             if (c.IsKey)
                             {
-                                World.DrawMarker(MarkerType.ChevronUpx1, ARS.TrackPoints[c.Node].Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), Color.SkyBlue, false, true, 0, false, "", "", false);
+                                World.DrawMarker(MarkerType.ChevronUpx1, ARS.TrackPoints[c.Node].Position + new Vector3(0, 0, 1.5f), Vector3.Zero, new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, -0.5f), Color.SkyBlue, false, true, false, "", "", false);
                             }
 
 
@@ -1208,7 +1207,7 @@ namespace ARS
             if (NearbyRivals.Any())
             {
                 //AI shouldn't be aggresive while crowded
-                if (NearbyRivals.Where(r => r.Car.IsInRangeOf(Car.Position, 40)).Count() > 2)
+                if (NearbyRivals.Where(r => r.Car.IsInRange(Car.Position, 40)).Count() > 2)
                 {
                     mem.intention.AggroToReach = 0f;
                 }
@@ -1312,7 +1311,7 @@ namespace ARS
         bool WouldMoveOutOfTrack(float maneuver)
         {
             //if we're already close to the outside and the maneuver turns us further there
-            if (Math.Abs(mem.data.DeviationFromCenter) + Car.Model.GetDimensions().X > trackPoint.TrackWide && maneuver > 0 == mem.data.DeviationFromCenter > 0) return true;
+            if (Math.Abs(mem.data.DeviationFromCenter) + Car.Model.Dimensions.frontTopRight.X > trackPoint.TrackWide && maneuver > 0 == mem.data.DeviationFromCenter > 0) return true;
 
             return false;
         }
@@ -1364,13 +1363,13 @@ namespace ARS
                     Lap++;
                     if (Lap > ARS.SettingsFile.GetValue("GENERAL_SETTINGS", "Laps", 5))
                     {
-                        if (Car.CurrentBlip != null) Car.CurrentBlip.Color = BlipColor.Green;
+                        if (Car.AttachedBlip != null) Car.AttachedBlip.Color = BlipColor.Green;
                     }
 
                     if (Lap > 1)
                     {
                         TimeSpan lapTime = ARS.ParseToTimeSpan(Game.GameTime - LapStartTime);
-                        if (Driver.IsPlayer) UI.Notify("Laptime: ~b~" + lapTime.ToString("m':'ss'.'fff"));
+                        if (Driver.IsPlayer) GTA.UI.Notification.Show("Laptime: ~b~" + lapTime.ToString("m':'ss'.'fff"));
                         LapTimes.Add(lapTime);
                         LapStartTime = Game.GameTime;
                     }
@@ -1418,7 +1417,7 @@ namespace ARS
                 if (Mistakes.Any(de => de.Value < Game.GameTime)) Mistakes.Remove(Mistakes.First(de => de.Value < Game.GameTime).Key);
                 if (BannedMistakes.Any(de => de.Value < Game.GameTime)) BannedMistakes.Remove(BannedMistakes.First(de => de.Value < Game.GameTime).Key);
 
-                if (ARS.DevSettingsFile.GetValue<bool>("RACERS", "AllowManeuvers", false) && !BannedDecisions.ContainsKey(Decision.NoOvertake) && KnownCorners.Any() && NearbyRivals.Where(r => r.Car.IsInRangeOf(Car.Position, BoundingBox * 4)).Count() >= 3)
+                if (ARS.DevSettingsFile.GetValue<bool>("RACERS", "AllowManeuvers", false) && !BannedDecisions.ContainsKey(Decision.NoOvertake) && KnownCorners.Any() && NearbyRivals.Where(r => r.Car.IsInRange(Car.Position, BoundingBox * 4)).Count() >= 3)
                 {
                     MakeDecision(Decision.NoOvertake, 100 - (int)(mem.intention.Aggression * 100), 2500, 2500, 2500);
                 }
@@ -1462,7 +1461,7 @@ namespace ARS
                 if (Function.Call<bool>((Hash)0x3D34E80EED4AE3BE, Car) && vControl.Brake > 0.1f) Function.Call((Hash)0x81E1552E35DC3839, Car, false);
 
 
-                if (ARS.DevSettingsFile.GetValue<int>("RACERS", "AIRacerAutofix", 1) == 2 && Function.Call<bool>(Hash._IS_VEHICLE_DAMAGED, Car))
+                if (ARS.DevSettingsFile.GetValue<int>("RACERS", "AIRacerAutofix", 1) == 2 && Function.Call<bool>(Hash.GET_DOES_VEHICLE_HAVE_DAMAGE_DECALS, Car))
                 {
                     Car.Repair();
                 }
@@ -1488,14 +1487,14 @@ namespace ARS
                             else if (!StuckRecover && !Car.Model.IsBike)
                             {
                                 LastStuckPlace = Car.Position;
-                                if (ARS.DebugVisual > 0) UI.Notify("~b~" + Car.FriendlyName + " tries to recover");
+                                if (ARS.DebugVisual > 0) GTA.UI.Notification.Show("~b~" + Car.LocalizedName + " tries to recover");
                                 StuckRecover = true;
                             }
                         }
                     }
                 }
 
-                if (StuckRecover && (!Car.IsInRangeOf(LastStuckPlace, 5f) || mem.data.SpeedVector.Y > 3f))
+                if (StuckRecover && (!Car.IsInRange(LastStuckPlace, 5f) || mem.data.SpeedVector.Y > 3f))
                 {
                     StuckRecover = false;
                     StuckGameTimeRef = 0;
@@ -1799,7 +1798,7 @@ namespace ARS
             }
             else
             {
-                if (Car.CurrentBlip != null && Car.CurrentBlip.Exists()) Car.CurrentBlip.Remove();
+                if (Car.AttachedBlip != null && Car.AttachedBlip.Exists()) Car.AttachedBlip.Delete();
                 Car.Delete();
             }
         }

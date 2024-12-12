@@ -1,6 +1,9 @@
 ﻿using GTA;
+using GTA.UI;
 using GTA.Math;
 using GTA.Native;
+using Control = GTA.Control;
+using Screen = GTA.UI.Screen;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,6 +16,8 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
 using System.Text.RegularExpressions;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+using System.Data.Odbc;
 
 namespace ARS
 {
@@ -58,6 +63,9 @@ namespace ARS
 
     public class ARS : Script
     {
+        public static string ScriptName = "ARS";
+        public static string ScriptVer = "0.0.0.0";
+        public static string ScriptDate = "30/09/2018";
 
         public static Dictionary<Vector3, string> ImmersiveJoins = new Dictionary<Vector3, string>();
 
@@ -201,9 +209,9 @@ namespace ARS
             LoadSettings();
 
 
-            string ScriptName = "ARS";
-            string ScriptVer = "0.0.0.0";
-            string ScriptDate = "30/09/2018";
+            ScriptName = "ARS";
+            ScriptVer = "0.0.0.0";
+            ScriptDate = "30/09/2018";
 
             // Get the version of the current application.
             Assembly assem = Assembly.GetExecutingAssembly();
@@ -213,11 +221,25 @@ namespace ARS
             ScriptDate = File.GetLastWriteTimeUtc(@"scripts/ARS/ARS.dll").ToString();
 
 
-            UI.Notify("~b~" + ScriptName + "~g~e~w~" + "~y~ " + ScriptVer + "~n~Build: ~g~" + ScriptDate);
+            Notification.Show("~b~" + ScriptName + "~g~e~w~" + "~y~ " + ScriptVer + "~n~Build: ~g~" + ScriptDate);
         }
 
 
+        public static string GetUserInput(int maxLength)
+        {
+            // ScriptDomain.CurrentDomain.PauseKeyEvents(true); // Prevent input conflicts
+            Function.Call(Hash.DISPLAY_ONSCREEN_KEYBOARD, true, "Enter input", "", "", "", "", "", maxLength + 1);
 
+            while (Function.Call<int>(Hash.UPDATE_ONSCREEN_KEYBOARD) == 0)
+            {
+                Script.Yield(); // Allow other scripts to run
+            }
+
+            // ScriptDomain.CurrentDomain.PauseKeyEvents(false); // Re-enable input
+
+            return Function.Call<string>(Hash.GET_ONSCREEN_KEYBOARD_RESULT) ?? string.Empty;
+
+        }
 
         Dictionary<string, string> TrackTags = new Dictionary<string, string>();
         public void FillKnownTracks()
@@ -420,7 +442,7 @@ namespace ARS
         public static float EngineTopSpeed(Vehicle v)
         {
 
-            return Function.Call<float>(Hash._0x53AF99BAA671CA47, v) / 0.75f;
+            return Function.Call<float>(Hash.GET_VEHICLE_ESTIMATED_MAX_SPEED, v) / 0.75f;
 
         }
 
@@ -654,7 +676,7 @@ namespace ARS
             if (TrackListPos > FilteredTrackList.Count - 1) TrackListPos = FilteredTrackList.Count - 1;
             if (TrackListPos < 0) TrackListPos = 0;
 
-            Game.DisableControlThisFrame(2, GTA.Control.Phone);
+            Game.DisableControlThisFrame(GTA.Control.Phone);
 
             string Menu = "-- Options --";
             if (OptionHovered > OptionsList.Count - 1) OptionHovered = OptionsList.Count - 1;
@@ -716,13 +738,13 @@ namespace ARS
             }
 
             Options oSelected = OptionsList[OptionHovered];
-            if (Game.IsControlJustPressed(2, GTA.Control.FrontendDown)) OptionHovered++;
-            if (Game.IsControlJustPressed(2, GTA.Control.FrontendUp)) OptionHovered--;
+            if (Game.IsControlJustPressed(Control.FrontendDown)) OptionHovered++;
+            if (Game.IsControlJustPressed(Control.FrontendUp)) OptionHovered--;
 
             if (OptionHovered < 0) OptionHovered = OptionsList.Count - 1;
             if (OptionHovered > OptionsList.Count - 1) OptionHovered = 0;
 
-            if (Game.IsControlJustPressed(2, GTA.Control.FrontendLeft))
+            if (Game.IsControlJustPressed(Control.FrontendLeft))
             {
                 if (oSelected == Options.GridSize) intendedOpponents--;
                 if (oSelected == Options.Laps) SettingsFile.SetValue("GENERAL_SETTINGS", "Laps", SettingsFile.GetValue<int>("GENERAL_SETTINGS", "Laps", 5) - 1);
@@ -740,7 +762,7 @@ namespace ARS
                     if (DebugVisual == (int)DebugDisplay.Inputs) SetSPLVisibility(true);
                 }
             }
-            if (Game.IsControlJustPressed(2, GTA.Control.FrontendRight))
+            if (Game.IsControlJustPressed(Control.FrontendRight))
             {
                 if (oSelected == Options.TrackList) TrackListPos++;
                 if (oSelected == Options.GridSize) intendedOpponents++;
@@ -758,14 +780,14 @@ namespace ARS
 
                 }
             }
-            if (Game.IsControlJustPressed(2, GTA.Control.FrontendAccept))
+            if (Game.IsControlJustPressed(Control.FrontendAccept))
             {
                 if (oSelected == Options.ReloadSettings)
                 {
                     SettingsFile = null;
                     DevSettingsFile = null;
                     LoadSettings();
-                    UI.Notify("Reloaded setting files");
+                    GTA.UI.Notification.Show("Reloaded setting files");
                 }
                 if (oSelected == Options.RaceOptions)
                 {
@@ -784,22 +806,22 @@ namespace ARS
                 if (oSelected == Options.Laps)
                 {
                     int p = 6;
-                    int.TryParse(Game.GetUserInput(4), out p);
+                    int.TryParse(GetUserInput(4), out p);
                     SettingsFile.SetValue("GENERAL_SETTINGS", "Laps", p);
                 }
                 if (oSelected == Options.GridSize)
                 {
                     int p = 6;
-                    int.TryParse(Game.GetUserInput(4), out p);
+                    int.TryParse(GetUserInput(4), out p);
                     intendedOpponents = p;
                 }
                 if (oSelected == Options.Disciplines)
                 {
-                    DisciplineFilter = Game.GetUserInput(999);
+                    DisciplineFilter = GetUserInput(999);
 
                     string[] disciplines = DisciplineFilter.Split(' ');
-                    string[] aliases = SettingsFile.GetAllValues("GENERAL_SETTINGS", "alias");
-                    string[] atags = SettingsFile.GetAllValues("GENERAL_SETTINGS", "tags");
+                    string[] aliases = SettingsFile.GetAllValues<string>("GENERAL_SETTINGS", "alias");
+                    string[] atags = SettingsFile.GetAllValues<string>("GENERAL_SETTINGS", "tags");
                     for (int d = 0; d < disciplines.Length; d++)
                     {
                         for (int i = 0; i < aliases.Length; i++)
@@ -825,7 +847,7 @@ namespace ARS
                 }
                 if (oSelected == Options.TrackList)
                 {
-                    TrackFilter = Game.GetUserInput(40);
+                    TrackFilter = GetUserInput(40);
                     ReFilterKnownTracks(TrackFilter);
                 }
                 if (oSelected == Options.CreateTrack)
@@ -846,9 +868,9 @@ namespace ARS
 
                 if (oSelected == Options.SaveTrack)
                 {
-                    UI.ShowSubtitle("Write a name for the track.", 5000);
+                    Screen.ShowSubtitle("Write a name for the track.", 5000);
 
-                    SaveRoute(Game.GetUserInput(30));
+                    SaveRoute(GetUserInput(30));
 
                 }
                 if (oSelected == Options.UpdateTrackFile)
@@ -890,18 +912,18 @@ namespace ARS
                             {
 
                                 Script.Wait(100);
-                                Log(LogImportance.Info, "Added " + v.FriendlyName);
+                                Log(LogImportance.Info, "Added " + v.LocalizedName);
                                 v.IsPersistent = true;
                                 Ped p = World.CreatePed(RacerModels[GetRandomInt(0, RacerModels.Count - 1)], v.Position + (v.ForwardVector * 5));
 
                                 Racer RandomRacer = new Racer(v, p);
 
-                                if (v.ColorCombinationCount < 2 && v.ClassType != VehicleClass.Emergency)
+                                if (v.Mods.ColorCombinationCount < 2 && v.ClassType != VehicleClass.Emergency)
                                 {
                                     VehicleColor c = randomcolors[GetRandomInt(0, randomcolors.Length - 1)];
-                                    v.PrimaryColor = c;
-                                    v.SecondaryColor = c;
-                                    v.PearlescentColor = c;
+                                    v.Mods.PrimaryColor = c;
+                                    v.Mods.SecondaryColor = c;
+                                    v.Mods.PearlescentColor = c;
                                 }
                                 Racers.Add(RandomRacer);
                             }
@@ -948,7 +970,7 @@ namespace ARS
                     }
                     else
                     {
-                        UI.Notify("~r~No track selected.");
+                        GTA.UI.Notification.Show("~r~No track selected.");
                     }
                 }
                 if (oSelected == Options.StartRace)
@@ -1053,13 +1075,13 @@ namespace ARS
 
 
                     //debugTrailer.SteeringAngle = v.SteeringAngle * -0.8f;
-                    UI.ShowSubtitle(message: str + "-" + debugTrailer.FriendlyName, 100);
+                    GTA.UI.Screen.ShowSubtitle(message: str + "-" + debugTrailer.LocalizedName, 100);
 
                 }
                 else
                 {
                     
-                 if(!debugTrailer.IsInRangeOf(v.Position,40))  debugTrailer = null;
+                 if(!debugTrailer.IsInRange(v.Position,40))  debugTrailer = null;
                 }
             }
             else
@@ -1122,7 +1144,7 @@ namespace ARS
         List<Vector3> MiniaturizedPath = new List<Vector3>();
         void DrawMiniaturizedPath(Vector3 pos)
         {
-            if (!Game.Player.Character.IsInRangeOf(pos, 20f)) return;
+            if (!Game.Player.Character.IsInRange(pos, 20f)) return;
             if (Path.Count > 0)
             {
                 if (MiniaturizedPath.Count == 0)
@@ -1184,10 +1206,10 @@ namespace ARS
                 {
                     for (int i = 0; i < ImmersiveJoins.Count; i++)
                     {
-                        if (Game.Player.Character.IsInRangeOf(ImmersiveJoins.ElementAt(i).Key, 50f))
+                        if (Game.Player.Character.IsInRange(ImmersiveJoins.ElementAt(i).Key, 50f))
                         {
                             NeabyImmersiveJoins.Add(ImmersiveJoins.ElementAt(i).Key, ImmersiveJoins.ElementAt(i).Value);
-                            UI.Notify("added" + ImmersiveJoins.ElementAt(i).Value);
+                            GTA.UI.Notification.Show("added" + ImmersiveJoins.ElementAt(i).Value);
                         }
                     }
                 }
@@ -1197,7 +1219,7 @@ namespace ARS
             foreach (Vector3 ip in NeabyImmersiveJoins.Keys)
             {
                 World.DrawMarker(MarkerType.VerticalCylinder, ip + new Vector3(0, 0, -25f), Vector3.Zero, -Vector3.WorldDown, new Vector3(10f, 10f, 30f), Color.Yellow);
-                if (Game.Player.Character.IsInRangeOf(ip, 3f)  && Game.Player.Character.IsStopped)
+                if (Game.Player.Character.IsInRange(ip, 3f)  && Game.Player.Character.IsStopped)
                 {
                     LoadRace(ImmersiveJoins[ip], null, intendedOpponents);
                     return;
@@ -1251,7 +1273,7 @@ namespace ARS
             //Drawing and GUI stuff
             if (routeEditMode) DrawPath(Path, WideDict, PathDisplayFidelity);
             if (TimeToFinishRace != 0 && TimeToFinishRace > Game.GameTime) DisplayHelpText("~y~" + (TimeToFinishRace - Game.GameTime) / 1000 + "s~w~ to end the race.");
-            if (DebugVisual == (int)DebugDisplay.PropEdit) foreach (Prop p in CustomProps) if (CanWeUse(p) && p.IsInRangeOf(Game.Player.Character.Position, 100f)) World.DrawMarker(MarkerType.ReplayIcon, p.Position + new Vector3(0, 0, p.Model.GetDimensions().Z + 2f), Vector3.Zero, p.Rotation, new Vector3(2, 2, 2), Color.Green);// DrawLine(p.Position, Path[ClosestNodeToPlace(p.Position, Path)]+new Vector3(0,0,0.5f), Color.Red);
+            if (DebugVisual == (int)DebugDisplay.PropEdit) foreach (Prop p in CustomProps) if (CanWeUse(p) && p.IsInRange(Game.Player.Character.Position, 100f)) World.DrawMarker(MarkerType.ReplayIcon, p.Position + new Vector3(0, 0, p.Model.Dimensions.frontTopRight.Z + 2f), Vector3.Zero, p.Rotation, new Vector3(2, 2, 2), Color.Green);// DrawLine(p.Position, Path[ClosestNodeToPlace(p.Position, Path)]+new Vector3(0,0,0.5f), Color.Red);
 
 
             //Scaleforms
@@ -1264,7 +1286,7 @@ namespace ARS
 
             if (listenmode)
             {
-                if (Game.IsControlJustPressed(2, GTA.Control.Jump))
+                if (Game.IsControlJustPressed(Control.Jump))
                 {
                     Vehicle playerVeh = Game.Player.Character.CurrentVehicle;
                     if (CanWeUse(playerVeh)) CreateVehicle(playerVeh, true);
@@ -1308,7 +1330,7 @@ namespace ARS
                 Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 Function.Call(Hash.SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
-                if (Racers.Count() > 0) Function.Call(Hash._0x90B6DA738A9A25DA, 0f); //Actively forces deletion of anything unwanted
+                if (Racers.Count() > 0) Function.Call(Hash.SET_AMBIENT_VEHICLE_RANGE_MULTIPLIER_THIS_FRAME, 0f); //Actively forces deletion of anything unwanted
                 Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
             }
@@ -1316,7 +1338,7 @@ namespace ARS
             //Create the menu on key inputs
             if (OptionsList.Count == 0)
             {
-                if ((DevSettingsFile.GetValue<bool>("GENERAL", "Hotkeys", true) && Game.IsControlPressed(2, GTA.Control.Sprint) && Game.IsControlPressed(2, GTA.Control.Context)) || WasCheatStringJustEntered("arsmenu"))
+                if ((DevSettingsFile.GetValue<bool>("GENERAL", "Hotkeys", true) && Game.IsControlPressed(Control.Sprint) && Game.IsControlPressed(Control.Context)) || WasCheatStringJustEntered("arsmenu"))
                 {
                     OptionHovered = 0;
                     if (routeEditMode)
@@ -1363,7 +1385,7 @@ namespace ARS
             }
             else
             {
-                if (Game.IsControlJustPressed(2, GTA.Control.FrontendCancel))
+                if (Game.IsControlJustPressed(Control.FrontendCancel))
                 {
                     if (OptionsList[OptionHovered] == Options.DebugLevel)
                     {
@@ -1386,7 +1408,7 @@ namespace ARS
                     {
                         foreach (Vehicle candidate in GetNearbyCandidates())
                         {
-                            World.DrawMarker(MarkerType.ChevronUpx1, candidate.Position + (new Vector3(0, 0, 1)), Vector3.Zero, Vector3.Zero, new Vector3(1, 1, -1), Color.SkyBlue, true, true, 0, false, "", "", false);
+                            World.DrawMarker(MarkerType.ChevronUpx1, candidate.Position + new Vector3(0, 0, 1), Vector3.Zero, Vector3.Zero, new Vector3(1, 1, -1), Color.SkyBlue, true, true, false, "", "", false);
                         }
                     }
                 }
@@ -1398,7 +1420,7 @@ namespace ARS
             {
                 if (CanWeUse(Game.Player.Character.CurrentVehicle))
                 {
-                    if ((Game.IsControlJustPressed(2, GTA.Control.VehicleAccelerate))) StartCoundown();
+                    if ((Game.IsControlJustPressed(Control.VehicleAccelerate))) StartCoundown();
                 }
                 else StartCoundown();
             }
@@ -1408,7 +1430,7 @@ namespace ARS
                 GametimeCountDown = Game.GameTime + 1000;
 
                 //While the countdown is on, you can enter the opponents' vehicles
-                Vehicle jack = Game.Player.Character.GetVehicleIsTryingToEnter();
+                Vehicle jack = Game.Player.Character.VehicleTryingToEnter;
                 if (CountDown > 0 && Racers.Count > 0 && CanWeUse(jack) && jack != Game.Player.Character.LastVehicle && !jack.IsSeatFree(VehicleSeat.Driver) && jack.Handle == Racers.OrderBy(c => c.Car.Position.DistanceTo(Game.Player.Character.Position)).ToList()[0].Car.Handle)
                 {
                     Game.Player.Character.SetIntoVehicle(jack, VehicleSeat.Passenger);
@@ -1425,7 +1447,7 @@ namespace ARS
                         //if (CountDown == 3) foreach (Racer r in Racers) if (r.Car.HasRoof && r.Car.RoofState== VehicleRoofState.Closed) r.Car.RoofState = VehicleRoofState.Opening; //Function.Call(Hash.SET_VEHICLE_ENGINE_ON, r.Car, true, false, false);
 
 
-                        Game.PlaySound("3_2_1", "HUD_MINI_GAME_SOUNDSET");
+                        Audio.PlaySoundFrontend("3_2_1", "HUD_MINI_GAME_SOUNDSET");
 
                         if (CountDown == 0) SCCountdown.CallFunction("SHOW_SHARD_CENTERED_TOP_MP_MESSAGE", "GO", "", (int)12, (int)2);
                         else SCCountdown.CallFunction("SHOW_SHARD_CENTERED_TOP_MP_MESSAGE", CountDown, "", (int)12, (int)2);
@@ -1455,7 +1477,7 @@ namespace ARS
                 racer.ProcessTick();
                 if ((racer.Lap > SettingsFile.GetValue("GENERAL_SETTINGS", "Laps", 5) || (IsPointToPoint && racer.Lap > 1)) && !LeaderboardFinish.Contains(racer))
                 {
-                    if (racer.Car.CurrentBlip != null) racer.Car.CurrentBlip.Color = BlipColor.Green;
+                    if (racer.Car.AttachedBlip != null) racer.Car.AttachedBlip.Color = BlipColor.Green;
 
                     LeaderboardFinish.Add(racer);
                     racer.BaseBehavior = RacerBaseBehavior.FinishedRace;
@@ -1520,10 +1542,10 @@ namespace ARS
                     CleanEverything();
                 }
             }
-            else if (Function.Call<bool>(Hash._0xAF754F20EB5CD51A)) //radar enabled
+            else if (Function.Call<bool>(Hash.IS_MINIMAP_RENDERING)) //radar enabled
             {
 
-                if (Game.IsControlPressed(2, GTA.Control.Sprint))
+                if (Game.IsControlPressed(Control.Sprint))
                 {
                     foreach (Racer r in Racers)
                     {
@@ -1565,7 +1587,7 @@ namespace ARS
 
 
             //Draw the leaderboard positions
-            if (positions.Count > 0 && OptionsList.Count == 0 && Function.Call<bool>(Hash._0xAF754F20EB5CD51A))
+            if (positions.Count > 0 && OptionsList.Count == 0 && Function.Call<bool>(Hash.IS_MINIMAP_RENDERING))
             {
                 float z = 0.15f;
                 float scale = 0.4f;
@@ -1608,12 +1630,12 @@ namespace ARS
         }
         public void ToggleSPLVisibility()
         {
-            foreach (Prop p in World.GetAllProps()) if (p.Model == "prop_mp_max_out_lrg") if (p.Alpha == 0) p.Alpha = 255; else p.Alpha = 0;
+            foreach (Prop p in World.GetAllProps()) if (p.Model == "prop_mp_max_out_lrg") if (p.Opacity == 0) p.Opacity = 255; else p.Opacity = 0;
         }
 
         public void SetSPLVisibility(bool state)
         {
-            foreach (Prop p in World.GetAllProps()) if (p.Model == "prop_mp_max_out_lrg") if (state) p.Alpha = 255; else p.Alpha = 0;
+            foreach (Prop p in World.GetAllProps()) if (p.Model == "prop_mp_max_out_lrg") if (state) p.Opacity = 255; else p.Opacity = 0;
         }
         bool InFreeCam = false;
         void HandleTrackCreator()
@@ -1662,7 +1684,7 @@ namespace ARS
             {
                 if (wide < 1) wide = 1;
                 if (scale < 5f) scale = 5f;
-                RaycastResult ray = World.Raycast(GameplayCamera.Position, GameplayCamera.Position + ((GameplayCamera.Direction.Normalized) * 100), IntersectOptions.Everything);
+                RaycastResult ray = World.Raycast(GameplayCamera.Position, GameplayCamera.Position + ((GameplayCamera.Direction.Normalized) * 100), IntersectFlags.Everything);
 
                 //Already started
                 if (Path.Count > 0)
@@ -1673,19 +1695,19 @@ namespace ARS
 
 
                     //Controls
-                    if (Game.IsControlJustPressed(2, GTA.Control.NextWeapon))
+                    if (Game.IsControlJustPressed(Control.NextWeapon))
                     {
-                        if (!Game.IsControlPressed(2, GTA.Control.Sprint)) scale -= 5f; else wide--;
+                        if (!Game.IsControlPressed(Control.Sprint)) scale -= 5f; else wide--;
                     }
-                    if (Game.IsControlJustPressed(2, GTA.Control.PrevWeapon))
+                    if (Game.IsControlJustPressed(Control.PrevWeapon))
                     {
-                        if (!Game.IsControlPressed(2, GTA.Control.Sprint)) scale += 5f; else wide++;
+                        if (!Game.IsControlPressed(Control.Sprint)) scale += 5f; else wide++;
                     }
-                    if (Game.IsControlJustPressed(2, GTA.Control.Aim))
+                    if (Game.IsControlJustPressed(Control.Aim))
                     {
                         if (Path.Count > 2)
                         {
-                            if (Game.IsControlPressed(2, GTA.Control.Sprint))
+                            if (Game.IsControlPressed(Control.Sprint))
                             {
                                 int i = 0;
                                 while (i < 10)
@@ -1708,7 +1730,7 @@ namespace ARS
                     }
 
                     //Add section
-                    if (Game.IsControlJustPressed(2, GTA.Control.Attack) && Cool < 1)
+                    if (Game.IsControlJustPressed(Control.Attack) && Cool < 1)
                     {
                         for (int i = 1; i < RouteSection.Count; i++)
                         {
@@ -1720,8 +1742,8 @@ namespace ARS
                 {
                     DisplayHelpTextThisFrame("Place the ~b~Start Line.");
 
-                    if (Game.IsControlJustPressed(2, GTA.Control.NextWeapon)) wide--;
-                    if (Game.IsControlJustPressed(2, GTA.Control.PrevWeapon)) wide++;
+                    if (Game.IsControlJustPressed(Control.NextWeapon)) wide--;
+                    if (Game.IsControlJustPressed(Control.PrevWeapon)) wide++;
 
                 }
 
@@ -1730,14 +1752,14 @@ namespace ARS
                 //Section rendering
                 if (Path.Count > 1)
                 {
-                    if (ray.DitHitAnything && Cool < 1)
+                    if (ray.DidHit && Cool < 1)
                     {
                         //Reference marker
-                        World.DrawMarker(MarkerType.DebugSphere, ray.HitCoords, Vector3.Zero, -Vector3.WorldDown, new Vector3(0.25f, 0.25f, 0.25f), Color.Blue);
+                        World.DrawMarker(MarkerType.DebugSphere, ray.HitPosition, Vector3.Zero, -Vector3.WorldDown, new Vector3(0.25f, 0.25f, 0.25f), Color.Blue);
 
                         Vector3 sStart = Path[Path.Count - 1];
                         Vector3 sDirection = (Path[Path.Count - 1] - Path[Path.Count - 2]).Normalized;
-                        Vector3 sEnd = ray.HitCoords;
+                        Vector3 sEnd = ray.HitPosition;
                         float sScale = sStart.DistanceTo(sEnd) * 0.5f;
 
                         List<Vector3> temporaryPath = GenerateBezier(sStart, sDirection, sEnd, sScale);
@@ -1767,24 +1789,24 @@ namespace ARS
                 else
                 {
 
-                    World.DrawMarker(MarkerType.ChevronUpx3, ray.HitCoords, FreecCamRide.ForwardVector, new Vector3(-90, 0, 0), new Vector3(1, 1, 1), Color.Blue);
-                    World.DrawMarker(MarkerType.ChevronUpx3, ray.HitCoords, FreecCamRide.ForwardVector, new Vector3(-90, 0, 0), new Vector3(1, 1, 1), Color.Blue);
-                    DrawLine(ray.HitCoords, ray.HitCoords - (FreecCamRide.ForwardVector * 10), Color.Blue);
+                    World.DrawMarker(MarkerType.ChevronUpx3, ray.HitPosition, FreecCamRide.ForwardVector, new Vector3(-90, 0, 0), new Vector3(1, 1, 1), Color.Blue);
+                    World.DrawMarker(MarkerType.ChevronUpx3, ray.HitPosition, FreecCamRide.ForwardVector, new Vector3(-90, 0, 0), new Vector3(1, 1, 1), Color.Blue);
+                    DrawLine(ray.HitPosition, ray.HitPosition - (FreecCamRide.ForwardVector * 10), Color.Blue);
 
-                    Vector3 right = ray.HitCoords + (FreecCamRide.RightVector * wide);
-                    Vector3 left = ray.HitCoords - (FreecCamRide.RightVector * wide);
+                    Vector3 right = ray.HitPosition + (FreecCamRide.RightVector * wide);
+                    Vector3 left = ray.HitPosition - (FreecCamRide.RightVector * wide);
 
                     World.DrawMarker(MarkerType.UpsideDownCone, right + new Vector3(0, 0, 1), FreecCamRide.ForwardVector, new Vector3(0, 0, 0), new Vector3(1, 1, 1), Color.Blue);
                     World.DrawMarker(MarkerType.UpsideDownCone, left + new Vector3(0, 0, 1), FreecCamRide.ForwardVector, new Vector3(0, 0, 0), new Vector3(1, 1, 1), Color.Blue);
                     DrawLine(left + new Vector3(0, 0, 0.05f), right + new Vector3(0, 0, 0.05f), Color.Blue);
 
-                    if (Game.IsControlJustPressed(2, GTA.Control.Attack) && ray.DitHitAnything)
+                    if (Game.IsControlJustPressed(Control.Attack) && ray.DidHit)
                     {
-                        Vector3 p = ray.HitCoords;// + new Vector3(0, 0, 0.5f);
+                        Vector3 p = ray.HitPosition;// + new Vector3(0, 0, 0.5f);
                         Path.Add(p);
-                        p = ray.HitCoords - (FreecCamRide.ForwardVector * 1);
+                        p = ray.HitPosition - (FreecCamRide.ForwardVector * 1);
                         Path.Add(p);
-                        rBezier = (ray.HitCoords - (FreecCamRide.ForwardVector * 6));
+                        rBezier = (ray.HitPosition - (FreecCamRide.ForwardVector * 6));
 
                     }
                 }
@@ -1841,10 +1863,10 @@ namespace ARS
                 }
                 if (stepDist > 1.0f) break;
 
-                if (!Game.IsControlPressed(2, GTA.Control.Sprint))
+                if (!Game.IsControlPressed(Control.Sprint))
                 {
-                    RaycastResult toGround = World.Raycast(p + new Vector3(0, 0, 2f), p + (Vector3.WorldDown * 30f), IntersectOptions.Map);
-                    if (toGround.DitHitAnything) p.Z = toGround.HitCoords.Z;
+                    RaycastResult toGround = World.Raycast(p + new Vector3(0, 0, 2f), p + (Vector3.WorldDown * 30f), IntersectFlags.Map);
+                    if (toGround.DidHit) p.Z = toGround.HitPosition.Z;
                 }
                 points.Add(p);
             }
@@ -1902,10 +1924,10 @@ namespace ARS
 
                 //Sprint on = Zpos is ground
                 //Sprint off= zpos is defined by the bezier curve (transition)
-                if (!Game.IsControlPressed(2, GTA.Control.Sprint))
+                if (!Game.IsControlPressed(Control.Sprint))
                 {
-                    RaycastResult toGround = World.Raycast(addPos + new Vector3(0, 0, 2f), addPos + (Vector3.WorldDown * 30f), IntersectOptions.Map);
-                    if (toGround.DitHitAnything) addPos.Z = toGround.HitCoords.Z;
+                    RaycastResult toGround = World.Raycast(addPos + new Vector3(0, 0, 2f), addPos + (Vector3.WorldDown * 30f), IntersectFlags.Map);
+                    if (toGround.DidHit) addPos.Z = toGround.HitPosition.Z;
                 }
                 points.Add(addPos);
 
@@ -1972,9 +1994,9 @@ namespace ARS
         }
         void SetloadingPromptText(string t)
         {
-            Function.Call(Hash._0xABA17D7CE615ADBF, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, t);
-            Function.Call(Hash._0xBD12F8228410D9B4, 5);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_BUSYSPINNER_ON, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, t);
+            Function.Call(Hash.END_TEXT_COMMAND_BUSYSPINNER_ON, 5);
         }
 
 
@@ -1996,7 +2018,7 @@ namespace ARS
             {
                 Function.Call(Hash.HIDE_HUD_AND_RADAR_THIS_FRAME, true);
 
-                if (Game.IsControlJustPressed(2, GTA.Control.Detonate))
+                if (Game.IsControlJustPressed(Control.Detonate))
                 {
                     HideHudMode = !HideHudMode;
                 }
@@ -2012,7 +2034,7 @@ namespace ARS
                     if (scaleform == null || !scaleform.IsLoaded)
                     {
                         scaleform = new Scaleform("INSTRUCTIONAL_BUTTONS");
-                        UI.ShowSubtitle("~o~Scaleform not loaded", 500);
+                        GTA.UI.Screen.ShowSubtitle("~o~Scaleform not loaded", 500);
                         return;
                     }
 
@@ -2026,34 +2048,34 @@ namespace ARS
                             if (Path.Count() > 0)
                             {
 
-                                if (Game.IsControlPressed(2, GTA.Control.Sprint))
+                                if (Game.IsControlPressed(Control.Sprint))
                                 {
-                                    scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Aim), "Delete last ten nodes");
+                                    scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Aim), "Delete last ten nodes");
                                 }
                                 else
                                 {
 
-                                    scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Attack), "Apply Section");
-                                    scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Aim), "Delete last node");
-                                    scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Sprint), "More options");
+                                    scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Attack), "Apply Section");
+                                    scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Aim), "Delete last node");
+                                    scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Sprint), "More options");
 
                                 }
                             }
                             else
                             {
-                                scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Attack), "Place Start Line");
-                                scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.WeaponWheelPrev), "Widen");
-                                scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.WeaponWheelNext), "Tighten");
+                                scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Attack), "Place Start Line");
+                                scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.WeaponWheelPrev), "Widen");
+                                scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.WeaponWheelNext), "Tighten");
                             }
 
                         }
                         else
                         {
 
-                            if (IsDroneMode) scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.NextCamera), "Freecam Mode");
-                            else scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.NextCamera), "Drone Mode");
-                            scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Detonate), "Hide Hud");
-                            scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Jump), "Slow Mo");
+                            if (IsDroneMode) scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.NextCamera), "Freecam Mode");
+                            else scaleform.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.NextCamera), "Drone Mode");
+                            scaleform.CallFunction("SET_DATA_SLOT", 1, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Detonate), "Hide Hud");
+                            scaleform.CallFunction("SET_DATA_SLOT", 2, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Jump), "Slow Mo");
 
                         }
                     }
@@ -2061,21 +2083,21 @@ namespace ARS
                     if (!HideHudMode) scaleform.Render2D();
 
                 }
-                Game.DisableControlThisFrame(0, GTA.Control.Attack);
-                Game.DisableControlThisFrame(0, GTA.Control.Aim);
-                Game.DisableControlThisFrame(0, GTA.Control.NextCamera);
-                Game.DisableControlThisFrame(0, GTA.Control.Sprint);
-                Game.DisableControlThisFrame(0, GTA.Control.Jump);
-                Game.DisableControlThisFrame(0, GTA.Control.Phone);
+                Game.DisableControlThisFrame(Control.Attack);
+                Game.DisableControlThisFrame(Control.Aim);
+                Game.DisableControlThisFrame(Control.NextCamera);
+                Game.DisableControlThisFrame(Control.Sprint);
+                Game.DisableControlThisFrame(Control.Jump);
+                Game.DisableControlThisFrame(Control.Phone);
 
 
                 //Controls
-                if (Game.IsControlJustPressed(2, GTA.Control.Jump))
+                if (Game.IsControlJustPressed(Control.Jump))
                 {
 
                     if (TimeScale > 0.1f)
                     {
-                        if (TimeScale > 0.5) Function.Call(Hash._START_SCREEN_EFFECT, "FocusOut", 500, false);
+                        if (TimeScale > 0.5) Function.Call(Hash.ANIMPOSTFX_PLAY, "FocusOut", 500, false);
 
                         TimeScale = 0.001f;
                         IdealTimeScale = 0.001f;
@@ -2110,38 +2132,38 @@ namespace ARS
                 if (FreeCamMovement.Length() < 7f)
                 {
                     if (!IsDroneMode) spd = 0.02f;
-                    if (Game.IsControlPressed(2, GTA.Control.Sprint)) spd += 0.05f;
+                    if (Game.IsControlPressed(Control.Sprint)) spd += 0.05f;
 
                     if (GameplayCamera.IsRendering)
                     {
 
-                        if (Game.IsControlJustPressed(2, GTA.Control.NextCamera))
+                        if (Game.IsControlJustPressed(Control.NextCamera))
                         {
                             IsDroneMode = !IsDroneMode;
                             if (IsDroneMode) CamIntendedHeight = FreecCamRide.HeightAboveGround;
                         }
 
-                        if (Game.IsControlPressed(2, GTA.Control.Context)) CamIntendedHeight += 0.2f;
-                        if (Game.IsControlPressed(2, GTA.Control.Cover)) CamIntendedHeight -= 0.2f;
+                        if (Game.IsControlPressed(Control.Context)) CamIntendedHeight += 0.2f;
+                        if (Game.IsControlPressed(Control.Cover)) CamIntendedHeight -= 0.2f;
 
-                        if (Game.IsControlPressed(2, GTA.Control.VehicleAccelerate))
+                        if (Game.IsControlPressed(Control.VehicleAccelerate))
                         {
                             Reduce = false;
 
                             if (!IsDroneMode) FreeCamMovement += GameplayCamera.Direction * spd; else FreeCamMovement += Game.Player.Character.ForwardVector * spd;
                         }
-                        if (Game.IsControlPressed(2, GTA.Control.VehicleBrake))
+                        if (Game.IsControlPressed(Control.VehicleBrake))
                         {
                             Reduce = false;
                             if (!IsDroneMode) FreeCamMovement -= GameplayCamera.Direction * spd; else FreeCamMovement -= Game.Player.Character.ForwardVector * spd;
 
                         }
-                        if (Game.IsControlPressed(2, GTA.Control.MoveLeftOnly))
+                        if (Game.IsControlPressed(Control.MoveLeftOnly))
                         {
                             Reduce = false;
                             FreeCamMovement += Game.Player.Character.RightVector * -spd;
                         }
-                        if (Game.IsControlPressed(2, GTA.Control.MoveRightOnly))
+                        if (Game.IsControlPressed(Control.MoveRightOnly))
                         {
                             Reduce = false;
                             FreeCamMovement += Game.Player.Character.RightVector * +spd;
@@ -2213,7 +2235,7 @@ namespace ARS
             Log(LogImportance.Info, "Starting race");
             if (Path.Count == 0)
             {
-                UI.Notify("~r~Load or create a path route first.");
+                Notification.Show("~r~Load or create a path route first.");
                 return;
             }
 
@@ -2223,17 +2245,17 @@ namespace ARS
             AddPlayerToGrid();
             if (Racers.Count == 0)
             {
-                UI.Notify("~r~No vehicles found with those tags.");
+                Notification.Show("~r~No vehicles found with those tags.");
                 return;
             }
 
-            Game.MissionFlag = true;
+            Function.Call(Hash.SET_MISSION_FLAG, true); // Updated from // Game.MissionFlag = true;
             Log(LogImportance.Info, "Setting up");
             SetupRace(true, true);
             Log(LogImportance.Info, "Set up");
-
-            if (!InFreeCam || Game.IsScreenFadedIn) Function.Call(Hash.DO_SCREEN_FADE_IN, 500);
-            Game.SetControlNormal(2, GTA.Control.VehicleLookBehind, 1f);
+            
+            if (!InFreeCam || Screen.IsFadedIn) Function.Call(Hash.DO_SCREEN_FADE_IN, 500);
+            Game.SetControlValueNormalized(Control.VehicleLookBehind, 1f);
 
 
             if (ARS.SettingsFile.GetValue("CATCHUP", "OnlyLastHalf", true)) ARS.catchupPos = (int)(ARS.Racers.Count / 2);
@@ -2243,7 +2265,7 @@ namespace ARS
 
         public void CleanRacers()
         {
-            Game.MissionFlag = false;
+            Function.Call(Hash.SET_MISSION_FLAG, false); // Updated from // Game.MissionFlag = false;
             foreach (Racer r in Racers)
             {
                 r.Delete();
@@ -2270,7 +2292,7 @@ namespace ARS
             Log(LogImportance.Info, "Loading race (" + track + ")");
             if (!KnownTracks.Contains(track))
             {
-                UI.Notify("Track does not exist.");
+                GTA.UI.Notification.Show("Track does not exist.");
                 return;
             }
 
@@ -2286,13 +2308,13 @@ namespace ARS
 
                 Vehicle playerveh = Game.Player.Character.LastVehicle;
                 float acc = Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, playerveh.Model.Hash);
-                float spd = Function.Call<float>(Hash._0xF417C2502FFFED43, playerveh.Model.Hash);
+                float spd = Function.Call<float>(Hash.GET_VEHICLE_MODEL_ESTIMATED_MAX_SPEED, playerveh.Model.Hash);
 
                 hashes.RemoveAll(h => Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, (int)h) < acc - 0.075f);
                 hashes.RemoveAll(h => Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, (int)h) > acc + 0.075f);
 
-                hashes.RemoveAll(h => Function.Call<float>(Hash._0xF417C2502FFFED43, (int)h) > spd + ARS.MPHtoMS(20));
-                hashes.RemoveAll(h => Function.Call<float>(Hash._0xF417C2502FFFED43, (int)h) < spd - ARS.MPHtoMS(20));
+                hashes.RemoveAll(h => Function.Call<float>(Hash.GET_VEHICLE_MODEL_ESTIMATED_MAX_SPEED, (int)h) > spd + ARS.MPHtoMS(20));
+                hashes.RemoveAll(h => Function.Call<float>(Hash.GET_VEHICLE_MODEL_ESTIMATED_MAX_SPEED, (int)h) < spd - ARS.MPHtoMS(20));
 
                 hashes.OrderByDescending(h => Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, (int)h));
 
@@ -2306,9 +2328,9 @@ namespace ARS
                     Model m = new Model(hash);
 
                     //Similar size and same kind of vehicle
-                    if (Math.Abs(m.GetDimensions().Length() - playerveh.Model.GetDimensions().Length()) < 5f &&
+                    if (Math.Abs(m.Dimensions.frontTopRight.Length() - playerveh.Model.Dimensions.rearBottomLeft.Length()) < 5f &&
                         (m.IsCar && playerveh.Model.IsCar) ||
-                        (m.IsQuadbike && playerveh.Model.IsQuadbike) ||
+                        (m.IsQuadBike && playerveh.Model.IsQuadBike) ||
                         (m.IsBike && playerveh.Model.IsBike) ||
                         (m.IsBicycle && playerveh.Model.IsBicycle))
                     {
@@ -2328,7 +2350,7 @@ namespace ARS
                     Racer r = new Racer(v, p);
 
                     Racers.Add(r);
-                    //UI.Notify(h.ToString() + " - " + Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, (int)h));
+                    //GTA.UI.Notification.Show(h.ToString() + " - " + Function.Call<float>(Hash.GET_VEHICLE_MODEL_ACCELERATION, (int)h));
 
                 }
 
@@ -2377,13 +2399,13 @@ namespace ARS
                     case GridSort.PowerDescendent: { Racers = Racers.OrderBy(v => Function.Call<float>(Hash.GET_VEHICLE_ACCELERATION, v.Car)).Reverse().ToList(); break; }
                     case GridSort.TopSpeed: { Racers = Racers.OrderBy(v => Function.Call<float>((Hash)0xF417C2502FFFED43, v.Car.Model.Hash)).ToList(); break; }
                     case GridSort.TopSpeedDescendent: { Racers = Racers.OrderBy(v => Function.Call<float>((Hash)0xF417C2502FFFED43, v.Car.Model.Hash)).Reverse().ToList(); break; }
-                    case GridSort.Random: { Racers = Racers.OrderBy(v => v.Car.Model.Hash.ToString().Substring(0, 1) + (int)v.Car.PrimaryColor).ToList(); break; }
+                    case GridSort.Random: { Racers = Racers.OrderBy(v => v.Car.Model.Hash.ToString().Substring(0, 1) + (int)v.Car.Mods.PrimaryColor).ToList(); break; }
                 }
 
             }
             if (Racers.Any(r => r.team == Team.Cop))
             {
-                UI.Notify("Cops 'n' Crooks detected");
+                GTA.UI.Notification.Show("Cops 'n' Crooks detected");
                 Racers = Racers.OrderBy(v => (int)v.team).ToList();
             }
 
@@ -2482,7 +2504,7 @@ namespace ARS
                 Log(LogImportance.Info, "Tuning cars");
                 foreach (Racer r in Racers)
                 {
-                    if (!Game.Player.Character.IsInVehicle(r.Car) && r.Car.GetMod(VehicleMod.Engine) == -1)
+                    if (!Game.Player.Character.IsInVehicle(r.Car) && Function.Call<bool>(Hash.GET_VEHICLE_MOD, -1))
                     {
                         switch (DevSettingsFile.GetValue<int>("RACERS", "AITuningLevel", 1))
                         {
@@ -2492,6 +2514,19 @@ namespace ARS
                             case 3: ARS.RandomTuning(r.Car, true, true, true, true, false); r.Car.EnginePowerMultiplier = GetRandomInt(1, 5) * 10; break;
                         }
                     }
+
+                    /*
+                    if (!Game.Player.Character.IsInVehicle(r.Car) && r.Car.GetMod(VehicleModType.Engine) == -1)
+                    {
+                        switch (DevSettingsFile.GetValue<int>("RACERS", "AITuningLevel", 1))
+                        {
+                            case 0: continue;
+                            case 1: ARS.RandomTuning(r.Car, true, true, true, false, false); break;
+                            case 2: ARS.RandomTuning(r.Car, true, true, true, true, false); break;
+                            case 3: ARS.RandomTuning(r.Car, true, true, true, true, false); r.Car.EnginePowerMultiplier = GetRandomInt(1, 5) * 10; break;
+                        }
+                    }
+                    */
                 }
             }
 
@@ -2540,7 +2575,7 @@ namespace ARS
             }
 
 
-            foreach (Racer r in Racers) if (r.Car.CurrentBlip != null) r.Car.CurrentBlip.Color = BlipColor.Blue;
+            foreach (Racer r in Racers) if (r.Car.AttachedBlip != null) r.Car.AttachedBlip.Color = BlipColor.Blue;
             RaceStatus = RaceState.NotInitiated;
         }
         public void StartCoundown()
@@ -2556,7 +2591,7 @@ namespace ARS
             Vector3 pos = start;// v.Position + (v.UpVector * 2f);
             Vector3 endpos = end;// v.Position + (v.UpVector * -5f);
 
-            int shape = Function.Call<int>(Hash._0x28579D1B8F8AAC80, pos.X, pos.Y, pos.Z, endpos.X, endpos.Y, endpos.Z, 0.3f, (int)IntersectOptions.Map, Game.Player.Character, 7);
+            int shape = Function.Call<int>(Hash.START_SHAPE_TEST_CAPSULE, pos.X, pos.Y, pos.Z, endpos.X, endpos.Y, endpos.Z, 0.3f, (int)IntersectFlags.Map, Game.Player.Character, 7);
 
             OutputArgument didhit = new OutputArgument();
             OutputArgument hitpos = new OutputArgument();
@@ -2565,7 +2600,7 @@ namespace ARS
 
             OutputArgument entity = new OutputArgument();
 
-            Function.Call(Hash._0x65287525D951F6BE, shape, didhit, hitpos, snormal, materialhash, entity);
+            Function.Call(Hash.GET_SHAPE_TEST_RESULT_INCLUDING_MATERIAL, shape, didhit, hitpos, snormal, materialhash, entity);
 
 
             return materialhash.GetResult<int>();
@@ -2608,16 +2643,16 @@ namespace ARS
                     Prop gate = World.CreateProp("prop_flare_01b", p + new Vector3(0f, 0f, 0.05f), new Vector3(0, 0, (nodes[1] - nodes[0]).Normalized.ToHeading() + 90f), false, false);
                     gate.Position = GetPerpendicular(gate.Position, gate.Position - gate.RightVector, WideDict[0], true);
                     AttachFlare(gate, FlaresColor);
-                    gate.FreezePosition = true;
-                    gate.HasCollision = false;
+                    gate.IsPositionFrozen = true;
+                    gate.IsCollisionEnabled = false;
                     TrackLimits.Add(gate);
 
 
                     gate = World.CreateProp("prop_flare_01b", p + new Vector3(0f, 0f, 0.05f), new Vector3(0, 0, (nodes[1] - nodes[0]).Normalized.ToHeading() + 90f), false, false); ;
                     gate.Position = GetPerpendicular(gate.Position, gate.Position + gate.RightVector, WideDict[0], true);
                     AttachFlare(gate, FlaresColor);
-                    gate.FreezePosition = true;
-                    gate.HasCollision = false;
+                    gate.IsPositionFrozen = true;
+                    gate.IsCollisionEnabled = false;
                     TrackLimits.Add(gate);
                 }
 
@@ -2640,16 +2675,16 @@ namespace ARS
                     Prop gate = World.CreateProp("prop_flare_01b", nodes.Last() + new Vector3(0f, 0f, 0.05f), new Vector3(0, 0, (nodes[c - 2] - nodes.Last()).Normalized.ToHeading() + 90f), false, false); ;
                     gate.Position = GetPerpendicular(gate.Position, gate.Position - gate.RightVector, WideDict[0], true);
                     AttachFlare(gate, FlaresColor);
-                    gate.FreezePosition = true;
-                    gate.HasCollision = false;
+                    gate.IsPositionFrozen = true;
+                    gate.IsCollisionEnabled = false;
                     TrackLimits.Add(gate);
 
 
                     gate = World.CreateProp("prop_flare_01b", nodes.Last() + new Vector3(0f, 0f, 0.05f), new Vector3(0, 0, (nodes[c - 2] - nodes.Last()).Normalized.ToHeading() + 90f), false, false); ;
                     gate.Position = GetPerpendicular(gate.Position, gate.Position + gate.RightVector, WideDict[0], true);
                     AttachFlare(gate, FlaresColor);
-                    gate.FreezePosition = true;
-                    gate.HasCollision = false;
+                    gate.IsPositionFrozen = true;
+                    gate.IsCollisionEnabled = false;
                     TrackLimits.Add(gate);
                 }
 
@@ -2754,7 +2789,7 @@ namespace ARS
                     Vector3 lWidepos = Quaternion.RotationAxis(Vector3.WorldUp, (float)(Math.PI / 180f) * -90f) * ((pos - oldpos).Normalized * w);
                     if (TrackLimits.Count > 0)
                     {
-                        Function.Call(GTA.Native.Hash._SET_FOCUS_AREA, pos.X, pos.Y, pos.Z);
+                        Function.Call(Hash.SET_FOCUS_POS_AND_VEL, pos.X, pos.Y, pos.Z);
 
                     }
 
@@ -2789,8 +2824,8 @@ namespace ARS
                                     Script.Wait(1);
                                 }
                                 cone.Position += new Vector3(0, 0, -cone.HeightAboveGround);
-                                cone.FreezePosition = Frozen;
-                                cone.HasCollision = !Frozen;
+                                cone.IsPositionFrozen = Frozen;
+                                cone.IsCollisionEnabled = !Frozen;
                                 //Function.Call(Hash.SET_ENTITY_COLLISION, cone, false, false);
                                 if (cone.Model == new Model("prop_flare_01b")) AttachFlare(cone, FlaresColor);
                                 TrackLimits.Add(cone);
@@ -2815,8 +2850,8 @@ namespace ARS
                                     Script.Wait(1);
                                 }
                                 cone.Position += new Vector3(0, 0, -cone.HeightAboveGround);
-                                cone.FreezePosition = Frozen;
-                                cone.HasCollision = !Frozen;
+                                cone.IsPositionFrozen = Frozen;
+                                cone.IsCollisionEnabled = !Frozen;
                                 if (cone.Model == new Model("prop_flare_01b")) AttachFlare(cone, FlaresColor);
                                 TrackLimits.Add(cone);
                                 break;
@@ -2862,7 +2897,7 @@ namespace ARS
             float PercentRoad = (float)Math.Round((road * 100f) / total, 2);
             float PercentDirt = (float)Math.Round((dirtp * 100f) / total, 2);
             float PercentOther = (float)Math.Round((otherp * 100f) / total, 2);
-            UI.Notify("Track stats:~n~~b~Track Length: ~w~" + length + " Km ~n~(" + miles + " Miles).~n~Road: " + PercentRoad + "%~n~Dirt: " + PercentDirt + "% ~n~Other: " + PercentOther + "% ");
+            GTA.UI.Notification.Show("Track stats:~n~~b~Track Length: ~w~" + length + " Km ~n~(" + miles + " Miles).~n~Road: " + PercentRoad + "%~n~Dirt: " + PercentDirt + "% ~n~Other: " + PercentOther + "% ");
         }
 
         public bool PlayerOrCameraNearPos(Vector3 pos, float dist)
@@ -3099,9 +3134,9 @@ namespace ARS
         public void Notify(string text, float timeMult)
         {
 
-            GTA.Native.Function.Call(GTA.Native.Hash._SET_NOTIFICATION_TEXT_ENTRY, "STRING");
-            GTA.Native.Function.Call(GTA.Native.Hash._ADD_TEXT_COMPONENT_STRING, text);
-            GTA.Native.Function.Call(Hash._0x1E6611149DB3DB6B, "CHAR_DEFAULT", "CHAR_DEFAULT", false, 2, "", "", timeMult);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_THEFEED_POST, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, text);
+            Function.Call(Hash.END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT_TU, "CHAR_DEFAULT", "CHAR_DEFAULT", false, 2, "", "", timeMult);
 
         }
 
@@ -3115,7 +3150,7 @@ namespace ARS
                 Game.Player.Character.Heading = FreecCamRide.Heading;//+180f;
                 Game.Player.Character.IsVisible = true;
                 Game.Player.Character.HasGravity = true;
-                Game.Player.Character.HasCollision = true;
+                Game.Player.Character.IsCollisionEnabled = true;
 
                 Game.Player.Character.Position = FreecCamRide.Position - new Vector3(0, 0, FreecCamRide.HeightAboveGround);
                 if (IdealTimeScale != 1.0f)
@@ -3143,7 +3178,7 @@ namespace ARS
                     FreecCamRide.HasGravity = false;
                     Game.Player.Character.HasGravity = false;
                     Game.Player.Character.IsVisible = false;
-                    Game.Player.Character.HasCollision = false;
+                    Game.Player.Character.IsCollisionEnabled = false;
                 }
 
             }
@@ -3158,14 +3193,14 @@ namespace ARS
             {
                 Vehicle v = Game.Player.Character.CurrentVehicle;
                 string t = "";
-                t += (int)v.PrimaryColor + "~n~";
-                t += (int)v.SecondaryColor + "~n~";
-                t += (int)v.PearlescentColor + "~n~";
-                t += (int)v.RimColor + "~n~";
-                t += (int)v.TrimColor + "~n~";
-                t += (int)v.DashboardColor + "~n~";
+                t += (int)v.Mods.PrimaryColor + "~n~";
+                t += (int)v.Mods.SecondaryColor + "~n~";
+                t += (int)v.Mods.PearlescentColor + "~n~";
+                t += (int)v.Mods.RimColor + "~n~";
+                t += (int)v.Mods.TrimColor + "~n~";
+                t += (int)v.Mods.DashboardColor + "~n~";
 
-                UI.Notify(t);
+                Notification.Show(t);
             }
 
             if (WasCheatStringJustEntered("arson"))
@@ -3180,8 +3215,8 @@ namespace ARS
 
             if (WasCheatStringJustEntered("arsreload"))
             {
-                //UI.Notify("~b~[" + ScriptName + "]:~w~ Reloading settings and filling track/racer dictionaries.");
-                // UI.Notify("~b~[" + ScriptName+ "]:~w~ .");
+                //GTA.UI.Notification.Show("~b~[" + ScriptName + "]:~w~ Reloading settings and filling track/racer dictionaries.");
+                // GTA.UI.Notification.Show("~b~[" + ScriptName+ "]:~w~ .");
                 FillKnownDisciplines();
 
                 FillKnownTracks();
@@ -3190,23 +3225,23 @@ namespace ARS
             if (WasCheatStringJustEntered("arscarlisten"))
             {
                 listenmode = !listenmode;
-                if (listenmode) UI.Notify("~g~Listen mode is on."); else UI.Notify("~y~Listen mode disabled.");
+                if (listenmode) GTA.UI.Notification.Show("~g~Listen mode is on."); else GTA.UI.Notification.Show("~y~Listen mode disabled.");
             }
             if (WasCheatStringJustEntered("arsupdroute"))
 
             {
-                //UI.Notify("~b~[" + ScriptName + "]:~w~ Updating current route..");
+                //GTA.UI.Notification.Show("~b~[" + ScriptName + "]:~w~ Updating current route..");
                 UpdateRoute(true, true, true);
 
             }
             if (WasCheatStringJustEntered("arsbuildcarlist"))
             {
-                //UI.Notify("~b~[" + ScriptName + "]:~w~ Generating vehicle files for all SHVDN known vehicles in the game.");
+                //GTA.UI.Notification.Show("~b~[" + ScriptName + "]:~w~ Generating vehicle files for all SHVDN known vehicles in the game.");
 
                 foreach (VehicleHash hash in Enum.GetValues(typeof(VehicleHash)).Cast<VehicleHash>())
                 {
                     Model m = new Model(hash);
-                    if (m.IsBike || m.IsQuadbike || m.IsBicycle || m.IsCar) CreateVehicleFromHash(hash);
+                    if (m.IsBike || m.IsQuadBike || m.IsBicycle || m.IsCar) CreateVehicleFromHash(hash);
                     Script.Yield();
 
                 }
@@ -3214,7 +3249,7 @@ namespace ARS
 
             if (WasCheatStringJustEntered("arssettings"))
             {
-                UI.Notify("Re loading settings.");
+                GTA.UI.Notification.Show("Re loading settings.");
                 SettingsFile = null;
                 DevSettingsFile = null;
                 LoadSettings();
@@ -3223,7 +3258,7 @@ namespace ARS
 
             if (WasCheatStringJustEntered("arsddip"))
             {
-                cornerDistSafety = int.Parse(Game.GetUserInput(2));
+                cornerDistSafety = int.Parse(GetUserInput(2));
             }
             if (WasCheatStringJustEntered("arssavedriver")) CreateDriver(Game.Player.Character);
             if (WasCheatStringJustEntered("arssavecar"))
@@ -3266,7 +3301,7 @@ namespace ARS
             Log(LogImportance.Info, "-- UPDATING CURRENT ROUTE --");
             if (path || raceline)
             {
-                UI.Notify("Updating path and raceline.");
+                GTA.UI.Notification.Show("Updating path and raceline.");
                 XmlNode route = CurrentFile.SelectSingleNode("//Route");
                 Log(LogImportance.Info, "Removing original path.");
                 route.RemoveAll();
@@ -3323,7 +3358,7 @@ namespace ARS
 
             if (props)
             {
-                UI.Notify("Updating objects.");
+                GTA.UI.Notification.Show("Updating objects.");
                 XmlElement info = null;
                 Log(LogImportance.Info, "Removing all object references.");
 
@@ -3385,7 +3420,7 @@ namespace ARS
                     p.AppendChild(info);
 
                     info = CurrentFile.CreateElement("IsDynamic");
-                    info.InnerText = (!prop.FreezePosition).ToString(); // (!Function.Call<bool>(Hash.IS_ENTITY_STATIC, prop)).ToString();
+                    info.InnerText = (!prop.IsPositionFrozen).ToString(); // (!Function.Call<bool>(Hash.IS_ENTITY_STATIC, prop)).ToString();
 
 
                     info.InnerText = info.InnerText.Replace(",", ".");
@@ -3406,7 +3441,7 @@ namespace ARS
             }
             else
             {
-                CurrentFile.Save(@"scripts\ARS\Tracks\" + Game.GetUserInput(200) + ".xml");
+                CurrentFile.Save(@"scripts\ARS\Tracks\" + GetUserInput(200) + ".xml");
 
 
             }
@@ -3473,16 +3508,16 @@ namespace ARS
 
 
 
-            UI.ShowSubtitle("Write any tags you want for this track, separated by spaces. Example: rally long");
+            GTA.UI.Screen.ShowSubtitle("Write any tags you want for this track, separated by spaces. Example: rally long");
             XmlElement tags = document.CreateElement("Tags");
             XmlElement tag = document.CreateElement("Tag");
             tag.InnerText = World.GetStreetName(Path[0]);
             tags.AppendChild(tag);
             tag = document.CreateElement("Tag");
-            tag.InnerText = World.GetZoneName(Path[0]).Replace(" ", "");
+            tag.InnerText = World.GetZoneLocalizedName(Path[0]).Replace(" ", "");
             tags.AppendChild(tag);
 
-            string userTags = Game.GetUserInput(32);
+            string userTags = GetUserInput(32);
             if (userTags != "")
             {
                 foreach (string s in userTags.Split(' '))
@@ -3594,7 +3629,7 @@ namespace ARS
                 p.AppendChild(info);
 
                 info = document.CreateElement("IsDynamic");
-                info.InnerText = (!prop.FreezePosition).ToString(); // (!Function.Call<bool>(Hash.IS_ENTITY_STATIC, prop)).ToString();
+                info.InnerText = (!prop.IsPositionFrozen).ToString(); // (!Function.Call<bool>(Hash.IS_ENTITY_STATIC, prop)).ToString();
 
 
                 info.InnerText = info.InnerText.Replace(",", ".");
@@ -3625,7 +3660,7 @@ namespace ARS
             }
             if (Function.Call<bool>(Hash.HAS_NAMED_PTFX_ASSET_LOADED, "scr_apartment_mp"))
             {
-                Function.Call(Hash._SET_PTFX_ASSET_NEXT_CALL, "scr_apartment_mp");
+                Function.Call(Hash.USE_PARTICLE_FX_ASSET, "scr_apartment_mp");
                 if (CanWeUse(p))
                 {
                     int fx = Function.Call<int>(Hash.START_PARTICLE_FX_LOOPED_ON_ENTITY, "scr_finders_package_flare", p, 0f, 0f, 0.1f, 0f, 0f, 0f, 1f, true, true, true);
@@ -3666,7 +3701,7 @@ namespace ARS
             Log(LogImportance.Info, "Loading track");
             if (xmlFile == null)
             {
-                UI.Notify("~r~Invalid track file.");
+                GTA.UI.Notification.Show("~r~Invalid track file.");
                 return;
             }
             if (!InFreeCam) Function.Call(Hash.DO_SCREEN_FADE_OUT, 200);
@@ -3736,15 +3771,15 @@ namespace ARS
                         myprop.Position = pos;
                         Function.Call(Hash.SET_ENTITY_DYNAMIC, myprop, isDynamic);
                         Function.Call(Hash.FREEZE_ENTITY_POSITION, myprop, !isDynamic);
-                        Function.Call(Hash.SET_OBJECT_PHYSICS_PARAMS, myprop, 200f * myprop.Model.GetDimensions().Length(), 1f);
+                        Function.Call(Hash.SET_OBJECT_PHYSICS_PARAMS, myprop, 200f * myprop.Model.Dimensions.frontTopRight.Length(), 1f);
 
-                        if (prop.SelectSingleNode("TextureVariation") != null) Function.Call(Hash._0x971DA0055324D033, myprop, int.Parse(prop.SelectSingleNode("TextureVariation").InnerText));
+                        if (prop.SelectSingleNode("TextureVariation") != null) Function.Call(Hash.SET_OBJECT_TINT_INDEX, myprop, int.Parse(prop.SelectSingleNode("TextureVariation").InnerText));
 
                         CustomProps.Add(myprop);
 
                         if (hash == Game.GenerateHash("prop_mp_repair_01") && 1 == 2) //Garage stuff, never used
                         {
-                            myprop.Alpha = 50;
+                            myprop.Opacity = 50;
 
 
                             if (CanWeUse(Game.Player.Character.LastVehicle))
@@ -3768,7 +3803,7 @@ namespace ARS
                             Function.Call(Hash.SET_ENTITY_DYNAMIC, autog, false);
 
 
-                            MiniMap = autog.Position + new Vector3(0, 0, (autog.Model.GetDimensions().Z / 2));
+                            MiniMap = autog.Position + new Vector3(0, 0, (autog.Model.Dimensions.frontTopRight.Z / 2));
 
                         }
                     }
@@ -3780,7 +3815,7 @@ namespace ARS
             if (OptionValuesList[Options.ReverseRoute])
             {
                 RouteNodes.Reverse();
-                UI.Notify("~g~Route is reversed.");
+                GTA.UI.Notification.Show("~g~Route is reversed.");
             }
 
             int i = 0;
@@ -3835,7 +3870,7 @@ namespace ARS
             if (ARS.CanWeUse(Game.Player.Character.CurrentVehicle)) Game.Player.Character.CurrentVehicle.Position = Path[0]; else Game.Player.Character.Position = Path[20];
             if (CanWeUse(FreecCamRide)) FreecCamRide.Position = Path[5] + new Vector3(0, 0, 20);
             SetloadingPromptText("Finished loading props");
-            Function.Call(Hash._0x10D373323E5B9C0D);
+            Function.Call(Hash.BUSYSPINNER_OFF);
             SetSPLVisibility(false);
 
             Log(LogImportance.Info, "Loaded track");
@@ -4112,7 +4147,7 @@ namespace ARS
         static public float GetDirectionalBoundingBox(Entity e)
         {
             if (!CanWeUse(e)) return 0f;
-            return ARS.map(Vector3.Angle(e.ForwardVector, e.Velocity.Normalized), 0f, 90f, e.Model.GetDimensions().X, e.Model.GetDimensions().Y, true);
+            return ARS.map(Vector3.Angle(e.ForwardVector, e.Velocity.Normalized), 0f, 90f, e.Model.Dimensions.frontTopRight.X, e.Model.Dimensions.frontTopRight.Y, true);
         }
 
         static public void DrawDirectionalBoundingBox(Entity e, float lenght = 5f)
@@ -4264,7 +4299,7 @@ namespace ARS
         {
             List<ulong> wheelPtrs = GetWheelPtrs(handle);
             ulong offset = 0x1B8;
-            if (Game.Version <= GameVersion.VER_1_0_1290_1_STEAM) offset = 0x1B8;
+            if (Game.Version <= GameVersion.v1_0_1290_1_Steam) offset = 0x1B8;
             List<float> angle = new List<float>();
             foreach (var wheel in wheelPtrs)
             {
@@ -4292,7 +4327,7 @@ namespace ARS
             debugFrontend.CallFunction("CREATE_CONTAINER");
 
 
-            debugFrontend.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash._0x0499D7B09FC9B407, 2, (int)GTA.Control.Attack), percent + "%");
+            debugFrontend.CallFunction("SET_DATA_SLOT", 0, Function.Call<string>(Hash.GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING, 2, (int)Control.Attack), percent + "%");
 
             debugFrontend.CallFunction("DRAW_INSTRUCTIONAL_BUTTONS", -1);
 
@@ -4578,7 +4613,7 @@ namespace ARS
         {
 
             World.RenderingCamera = null;
-            Function.Call(Hash._STOP_ALL_SCREEN_EFFECTS);
+            Function.Call(Hash.ANIMPOSTFX_STOP_ALL);
             if (InFreeCam)
             {
                 ToggleFreeCam();
@@ -4599,15 +4634,15 @@ namespace ARS
             }
 
             Racers.Clear();
-            if (racertext != null && racertext.IsLoaded) racertext.Unload();
+            if (racertext != null && racertext.IsLoaded) racertext.Dispose();
             if (SCCountdown != null)
             {
                 SCCountdown.Dispose();
 
             }
-            scaleform.Unload();
-            scaleform.Dispose();
-            Function.Call(Hash._0x10D373323E5B9C0D);
+            // scaleform.Unload();
+            scaleform.Dispose(); // aka: Hash.SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED
+            Function.Call(Hash.BUSYSPINNER_OFF);
             Game.Player.Character.HasGravity = true;
             //base.Dispose(dispose);
         }
@@ -4618,11 +4653,11 @@ namespace ARS
 
         public bool HasArrived(Vehicle v, Vector3 pos, float range)
         {
-            return v.IsInRangeOf(pos, range) || (Function.Call<Vector3>(Hash.GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS, v, pos.X, pos.Y, pos.Z).Y < range && v.IsInRangeOf(pos, range * 2));
+            return v.IsInRange(pos, range) || (Function.Call<Vector3>(Hash.GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS, v, pos.X, pos.Y, pos.Z).Y < range && v.IsInRange(pos, range * 2));
         }
         public static bool WasCheatStringJustEntered(string cheat)
         {
-            return Function.Call<bool>(Hash._0x557E43C447E700A8, Game.GenerateHash(cheat));
+            return Function.Call<bool>(Hash.HAS_PC_CHEAT_WITH_HASH_BEEN_ACTIVATED, Game.GenerateHash(cheat));
         }
 
         int intendedOpponents = 5;
@@ -4647,7 +4682,7 @@ namespace ARS
             else
             {
                 Log(LogImportance.Error, " 'Scripts/ARS/Options.ini' does not exist. All config values will be default.");
-                UI.Notify("~o~Failed to load the Options file.~w~ Check you've installed ARS properly.");
+                GTA.UI.Notification.Show("~o~Failed to load the Options file.~w~ Check you've installed ARS properly.");
             }
 
             Log(LogImportance.Info, "Loading Developer Settings.ini ...");
@@ -4662,7 +4697,7 @@ namespace ARS
             else
             {
                 Log(LogImportance.Error, " 'Scripts/ARS/Settings.ini' does not exist. All config values will be default.");
-                UI.Notify("~o~Failed to load the Settings file.~w~ Check you've installed ARS properly.");
+                GTA.UI.Notification.Show("~o~Failed to load the Settings file.~w~ Check you've installed ARS properly.");
             }
 
             if (File.Exists(@"scripts\ARS\MemoryOffsets.ini"))
@@ -4680,7 +4715,7 @@ namespace ARS
             else
             {
                 Log(LogImportance.Error, " 'Scripts/ARS/MemoryOffsets.ini' does not exist. ARS will try to learn the memory offsets from the game.");
-                UI.Notify("~o~Failed to load the MemoryOffsets file.~w~ Check you've installed ARS properly.");
+                GTA.UI.Notification.Show("~o~Failed to load the MemoryOffsets file.~w~ Check you've installed ARS properly.");
             }
 
 
@@ -4743,9 +4778,9 @@ namespace ARS
 
         void WarnPlayer(string script_name, string title, string message)
         {
-            Function.Call(Hash._SET_NOTIFICATION_TEXT_ENTRY, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, message);
-            Function.Call(Hash._SET_NOTIFICATION_MESSAGE, "CHAR_SOCIAL_CLUB", "CHAR_SOCIAL_CLUB", true, 0, title, "~b~" + script_name);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_THEFEED_POST, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, message);
+            Function.Call(Hash.END_TEXT_COMMAND_THEFEED_POST_MESSAGETEXT, "CHAR_SOCIAL_CLUB", "CHAR_SOCIAL_CLUB", true, 0, title, "~b~" + script_name);
         }
 
         public static bool CanWeUse(Entity entity)
@@ -4757,9 +4792,9 @@ namespace ARS
         void DisplayHelpTextThisFrame(string text)
         {
             if (HelpMessages.Count > 0) return;
-            Function.Call(Hash._SET_TEXT_COMPONENT_FORMAT, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, text);
-            Function.Call(Hash._DISPLAY_HELP_TEXT_FROM_STRING_LABEL, 0, false, false, -1);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_HELP, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, text);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_HELP, 0, false, false, -1);
         }
 
 
@@ -4768,7 +4803,7 @@ namespace ARS
             var x2dp = new OutputArgument();
             var y2dp = new OutputArgument();
 
-            Function.Call<bool>(Hash._WORLD3D_TO_SCREEN2D, pos.X, pos.Y, pos.Z, x2dp, y2dp);
+            Function.Call<bool>(Hash.GET_SCREEN_COORD_FROM_WORLD_COORD, pos.X, pos.Y, pos.Z, x2dp, y2dp);
             return new Vector2(x2dp.GetResult<float>(), y2dp.GetResult<float>());
         }
 
@@ -4777,31 +4812,31 @@ namespace ARS
         public static void DrawText(Vector3 pos, string t, Color c, float scale)
         {
             Vector2 screeninfo = World3DToScreen2d(pos);
-            Function.Call(Hash._SET_TEXT_ENTRY, "STRING");
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
             Function.Call(Hash.SET_TEXT_CENTRE, true);
             Function.Call(Hash.SET_TEXT_COLOUR, c.R, c.G, c.B, c.A);
             Function.Call(Hash.SET_TEXT_SCALE, 1f, scale);
             Function.Call(Hash.SET_TEXT_DROP_SHADOW, true);
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, t);
-            Function.Call(Hash._DRAW_TEXT, screeninfo.X, screeninfo.Y);
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, t);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, screeninfo.X, screeninfo.Y);
         }
 
 
         public static float DrawText(Vector2 pos, string t, Color c, DrawTextFont font, DrawTextAlign align, float scale)
         {
-            Function.Call(Hash._SET_TEXT_ENTRY, "STRING");
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_TEXT, "STRING");
             Function.Call(Hash.SET_TEXT_COLOUR, c.R, c.G, c.B, c.A);
             Function.Call(Hash.SET_TEXT_SCALE, 1f, scale);
             Function.Call(Hash.SET_TEXT_RIGHT_JUSTIFY, true);
             Function.Call(Hash.SET_TEXT_DROP_SHADOW, true);
             Function.Call(Hash.SET_TEXT_JUSTIFICATION, (int)align);
             Function.Call(Hash.SET_TEXT_FONT, (int)font);
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, t);
-            Function.Call(Hash._DRAW_TEXT, pos.X, pos.Y);
-            Function.Call(Hash._0x54CE8AC98E120CAB, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, t);
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, t);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_TEXT, pos.X, pos.Y);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_GET_SCREEN_WIDTH_OF_DISPLAY_TEXT, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, t);
 
-            float size = Function.Call<float>(Hash._0x85F061DA64ED2F67, 1);
+            float size = Function.Call<float>(Hash.END_TEXT_COMMAND_GET_SCREEN_WIDTH_OF_DISPLAY_TEXT, 1);
 
             return size;
         }
@@ -4816,8 +4851,10 @@ namespace ARS
             float basedownf = 0.035f;
 
             //Downforce at that speed
-            if (r.Car.HasBone("spoiler")) Gs = 0.035f * nwheels;
-            else if (r.Car.HasBone("spflap_l") || r.Car.HasBone("spflap_r")) Gs = 0.035f * nwheels;
+            if (r.Car.Bones["spoiler"].IsValid) Gs = 0.035f * nwheels;
+            // if (r.Car.HasBone("spoiler")) Gs = 0.035f * nwheels;
+            else if (r.Car.Bones["spflap_l"].IsValid || r.Car.Bones["spflap_r"].IsValid) Gs = 0.035f * nwheels;
+            // else if (r.Car.HasBone("spflap_l") || r.Car.HasBone("spflap_r")) Gs = 0.035f * nwheels;
             else Gs += map(ms, 0, Function.Call<float>((Hash)0xF417C2502FFFED43, r.Car.Model.Hash), 0f, basedownf, true) * r.handlingData.Downforce * nwheels;
 
             if (float.IsNaN(Gs) || Gs > 5f) return 0f;
@@ -4933,6 +4970,7 @@ namespace ARS
             ulong tractionCurveMaxOffset = 0x00D0;
             *(float*)(handlingAddress + tractionCurveMaxOffset) = mult;
         }
+        /*
         unsafe private void SetGearRatio(Vehicle v, uint gear, float ratio)
         {
             if (!CanWeUse(v)) return;
@@ -4943,17 +4981,20 @@ namespace ARS
 
             *(float*)(v.MemoryAddress + 0x838 + gear * sizeof(float)) = ratio;
         }
+        */
 
         public static void RandomTuning(Vehicle veh, bool color, bool livery, bool parts, bool performance, bool horn)
         {
 
-            veh.InstallModKit();
+            veh.Mods.InstallModKit();
 
             Script.Wait(100);
-            if (livery && veh.LiveryCount > 0) veh.Livery = GetRandomInt(0, veh.LiveryCount);
-            if (veh.GetModCount(VehicleMod.Livery) > 0) veh.SetMod(VehicleMod.Livery, GetRandomInt(0, veh.GetModCount(VehicleMod.Livery)), false);
+            if (livery && veh.Mods.LiveryCount > 0) veh.Mods.Livery = GetRandomInt(0, veh.Mods.LiveryCount);
+            // if (Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, (int)VehicleModType.Livery) > 0) veh.SetMod(VehicleModType.Livery, GetRandomInt(0, Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, VehicleModType.Livery)), false);
+            if (Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, (int)VehicleModType.Livery) > 0) Function.Call(Hash.SET_VEHICLE_MOD, veh, VehicleModType.Livery, GetRandomInt(0, Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, VehicleModType.Livery)), false);
 
-            if (performance) veh.ToggleMod(VehicleToggleMod.Turbo, true);
+            // if (performance) veh.ToggleMod(VehicleToggleModType.Turbo, true);
+            if (performance) Function.Call(Hash.TOGGLE_VEHICLE_MOD, veh, VehicleToggleModType.Turbo, true);
             if (color)
             {
                 int c = GetRandomInt(1, Function.Call<int>(Hash.GET_NUMBER_OF_VEHICLE_COLOURS, veh));
@@ -4962,40 +5003,41 @@ namespace ARS
 
 
             //Change tuning parts
-            foreach (int mod in Enum.GetValues(typeof(VehicleMod)).Cast<VehicleMod>())
+            foreach (int mod in Enum.GetValues(typeof(VehicleModType)).Cast<VehicleModType>())
             {
-                if (mod == (int)VehicleMod.Horns) continue;
-                if (veh.GetModCount((VehicleMod)mod) > 0)
+                if (mod == (int)VehicleModType.Horns) continue;
+                if (Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, (VehicleModType)mod) > 0)
                 {
 
-                    if (new List<VehicleMod> { VehicleMod.Engine, VehicleMod.Transmission, VehicleMod.Brakes, VehicleMod.Suspension }.Contains((VehicleMod)mod))
+                    if (new List<VehicleModType> { VehicleModType.Engine, VehicleModType.Transmission, VehicleModType.Brakes, VehicleModType.Suspension }.Contains((VehicleModType)mod))
                     {
                         if (!performance) continue;
                     }
                     else if (!parts) continue;
-                    if (mod == (int)VehicleMod.FrontWheels) continue;
-                    if (mod == (int)VehicleMod.Suspension) continue;
-                    if (mod == (int)VehicleMod.Livery && !livery) continue;
-                    if (mod == (int)VehicleMod.Horns && !horn) continue;
-                    int d = veh.GetModCount((VehicleMod)mod);
+                    if (mod == (int)VehicleModType.FrontWheel) continue;
+                    if (mod == (int)VehicleModType.Suspension) continue;
+                    if (mod == (int)VehicleModType.Livery && !livery) continue;
+                    if (mod == (int)VehicleModType.Horns && !horn) continue;
+                    int d = Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, veh, (VehicleModType)mod);
 
                     if (d > 0)
                     {
                         Script.Wait(30);
-                        veh.SetMod((VehicleMod)mod, GetRandomInt(0, d), false);
+                        Function.Call(Hash.SET_VEHICLE_MOD, veh, (VehicleModType)mod, GetRandomInt(0, d), false);
+                        // veh.SetMod((VehicleModType)mod, GetRandomInt(0, d), false);
 
                     }
                 }
             }
 
             //Change neons if at night
-            if (World.CurrentDayTime.Hours > 20 || World.CurrentDayTime.Hours < 7)
+            if (World.CurrentTimeOfDay.Hours > 20 || World.CurrentTimeOfDay.Hours < 7)
             {
 
                 //Color neoncolor = Color.FromArgb(0, Util.GetRandomInt(0, 255), Util.GetRandomInt(0, 255), Util.GetRandomInt(0, 255));
                 Script.Wait(30);
                 Color neoncolor = Color.Red;// veh.CustomPrimaryColor;// Color.FromKnownColor((KnownColor)GetRandomInt(0, Enum.GetValues(typeof(KnownColor)).Cast<KnownColor>().Count()));
-                veh.NeonLightsColor = neoncolor;
+                veh.Mods.NeonLightsColor = neoncolor;
                 /*
                 veh.SetNeonLightsOn(VehicleNeonLight.Front, true);
                 veh.SetNeonLightsOn(VehicleNeonLight.Back, true);
@@ -5015,17 +5057,17 @@ namespace ARS
         static public void DisplayHelpTextTimed(string text, int time)
         {
 
-            Function.Call(Hash._SET_TEXT_COMPONENT_FORMAT, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, text);
-            Function.Call(Hash._DISPLAY_HELP_TEXT_FROM_STRING_LABEL, 0, false, false, time);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_HELP, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, text);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_HELP, 0, false, false, time);
         }
 
         static public void DisplayHelpText(string text)
         {
             if (HelpMessages.Count > 0) return;
-            Function.Call(Hash._SET_TEXT_COMPONENT_FORMAT, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, text);
-            Function.Call(Hash._DISPLAY_HELP_TEXT_FROM_STRING_LABEL, 0, false, false, -1f);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_HELP, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_TEXT_LABEL, text);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_HELP, 0, false, false, -1f);
         }
 
 
@@ -5047,7 +5089,7 @@ namespace ARS
 
             if (XMLFile == null)
             {
-                UI.Notify("~r~cannot find file");
+                Notification.Show("~r~cannot find file");
                 return XMLFile;
             }
 
@@ -5057,7 +5099,7 @@ namespace ARS
         }
         public static string CreateDriver(Ped ped)
         {
-            string name = Game.GetUserInput(32);
+            string name = GetUserInput(32);
 
             string filePath = @"Scripts\ARS\Drivers\" + name + ".xml";
 
@@ -5066,7 +5108,7 @@ namespace ARS
             XmlDocument XMLFile = new XmlDocument();
             if (XMLFile == null)
             {
-                UI.Notify("~r~cannot find file");
+                Notification.Show("~r~cannot find file");
             }
 
             XmlNode Data = XMLFile.CreateNode(XmlNodeType.Element, "Data", null);
@@ -5161,7 +5203,7 @@ namespace ARS
             XMLFile.AppendChild(Data);
 
             XMLFile.Save(@"scripts\\ARS\Drivers\" + name + ".xml");
-            UI.Notify("Saved");
+            GTA.UI.Notification.Show("Saved");
             return "Finished";
 
         }
@@ -5180,24 +5222,24 @@ namespace ARS
 
                 if (vehiclename == name)
                 {
-                    UI.Notify("Found");
+                    GTA.UI.Notification.Show("Found");
                     break;
                 }
             }
 
             car = World.CreateVehicle(int.Parse(XMLFile.SelectSingleNode("//Model").InnerText), place);
-            car.PrimaryColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Primary").InnerText);
-            car.SecondaryColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Secondary").InnerText);
-            car.PearlescentColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Pearl").InnerText);
-            car.RimColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Wheel").InnerText);
-            car.DashboardColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Dash").InnerText);
-            car.TrimColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Trim").InnerText);
+            car.Mods.PrimaryColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Primary").InnerText);
+            car.Mods.SecondaryColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Secondary").InnerText);
+            car.Mods.PearlescentColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Pearl").InnerText);
+            car.Mods.RimColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Wheel").InnerText);
+            car.Mods.DashboardColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Dash").InnerText);
+            car.Mods.TrimColor = (VehicleColor)int.Parse(XMLFile.SelectSingleNode("//Trim").InnerText);
 
-            foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/Mod")) car.SetMod((VehicleMod)int.Parse(modelement.GetAttribute("ModID")), int.Parse(modelement.InnerText), false);
+            // foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/Mod")) car.SetMod((VehicleModType)int.Parse(modelement.GetAttribute("ModID")), int.Parse(modelement.InnerText), false);
+            foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/Mod")) Function.Call(Hash.SET_VEHICLE_MOD, car, (VehicleModType)int.Parse(modelement.GetAttribute("ModID")), int.Parse(modelement.InnerText), false);
 
-
-
-            foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/ToggleMod")) car.ToggleMod((VehicleToggleMod)int.Parse(modelement.GetAttribute("ModID")), bool.Parse(modelement.InnerText));
+            // foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/ToggleMod")) car.ToggleMod((VehicleToggleModType)int.Parse(modelement.GetAttribute("ModID")), bool.Parse(modelement.InnerText));
+            foreach (XmlElement modelement in XMLFile.SelectNodes("//Mods/ToggleMod")) Function.Call(Hash.TOGGLE_VEHICLE_MOD, car, (VehicleToggleModType)int.Parse(modelement.GetAttribute("ModID")), bool.Parse(modelement.InnerText));
 
 
             foreach (XmlElement modelement in XMLFile.SelectNodes("//Extras/Extra")) car.ToggleExtra(int.Parse(modelement.InnerText), true);
@@ -5718,7 +5760,7 @@ namespace ARS
 
                 car.Heading = (Path[2] - Path[0]).ToHeading();
 
-                car.InstallModKit();
+                car.Mods.InstallModKit();
 
 
 
@@ -5736,25 +5778,25 @@ namespace ARS
                 else
                 {
 
-                    if (File.SelectSingleNode("//WheelType") != null) car.WheelType = (VehicleWheelType)int.Parse(File.SelectSingleNode("//WheelType").InnerText);
-                    if (File.SelectSingleNode("//Livery") != null) car.Livery = int.Parse(File.SelectSingleNode("//Livery").InnerText);
-                    if (File.SelectSingleNode("//Primary") != null) car.PrimaryColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Primary").InnerText);
+                    if (File.SelectSingleNode("//WheelType") != null) car.Mods.WheelType = (VehicleWheelType)int.Parse(File.SelectSingleNode("//WheelType").InnerText);
+                    if (File.SelectSingleNode("//Livery") != null) car.Mods.Livery = int.Parse(File.SelectSingleNode("//Livery").InnerText);
+                    if (File.SelectSingleNode("//Primary") != null) car.Mods.PrimaryColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Primary").InnerText);
                     else
                     {
-                        if (car.ColorCombinationCount > 2) car.ColorCombination = GetRandomInt(0, car.ColorCombinationCount);
+                        if (car.Mods.ColorCombinationCount > 2) car.Mods.ColorCombination = GetRandomInt(0, car.Mods.ColorCombinationCount);
                         else
                         {
                             VehicleColor c = randomcolors[GetRandomInt(0, randomcolors.Length - 1)];
-                            car.PrimaryColor = c;
-                            car.SecondaryColor = c;
-                            car.PearlescentColor = c;
+                            car.Mods.PrimaryColor = c;
+                            car.Mods.SecondaryColor = c;
+                            car.Mods.PearlescentColor = c;
                         }
                     }
-                    if (File.SelectSingleNode("//Secondary") != null) car.SecondaryColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Secondary").InnerText);
-                    if (File.SelectSingleNode("//Pearl") != null) car.PearlescentColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Pearl").InnerText);
-                    if (File.SelectSingleNode("//Wheel") != null) car.RimColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Wheel").InnerText);
-                    if (File.SelectSingleNode("//Dash") != null) car.DashboardColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Dash").InnerText);
-                    if (File.SelectSingleNode("//Trim") != null) car.TrimColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Trim").InnerText);
+                    if (File.SelectSingleNode("//Secondary") != null) car.Mods.SecondaryColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Secondary").InnerText);
+                    if (File.SelectSingleNode("//Pearl") != null) car.Mods.PearlescentColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Pearl").InnerText);
+                    if (File.SelectSingleNode("//Wheel") != null) car.Mods.RimColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Wheel").InnerText);
+                    if (File.SelectSingleNode("//Dash") != null) car.Mods.DashboardColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Dash").InnerText);
+                    if (File.SelectSingleNode("//Trim") != null) car.Mods.TrimColor = (VehicleColor)int.Parse(File.SelectSingleNode("//Trim").InnerText);
 
 
                     if (NodeExists(File, "//Mods"))
@@ -5766,9 +5808,11 @@ namespace ARS
                             {
                                 if (int.Parse(modelement.GetAttribute("ModIndex")) == 48)
                                 {
-                                    if (int.Parse(modelement.InnerText) == -1) car.SetMod(VehicleMod.Livery, GetRandomInt(0, car.GetModCount(VehicleMod.Livery)), false);
+                                    // if (int.Parse(modelement.InnerText) == -1) car.SetMod(VehicleModType.Livery, GetRandomInt(0, Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, car, VehicleModType.Livery)), false);
+                                    if (int.Parse(modelement.InnerText) == -1) Function.Call(Hash.SET_VEHICLE_MOD, car, VehicleModType.Livery, GetRandomInt(0, Function.Call<int>(Hash.GET_NUM_VEHICLE_MODS, car, VehicleModType.Livery)), false);
                                 }
-                                else car.SetMod((VehicleMod)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText), modelement.HasAttribute("IsCustom") && modelement.GetAttribute("IsCustom").ToLowerInvariant() == "true");
+                                // else car.SetMod((VehicleModType)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText), modelement.HasAttribute("IsCustom") && modelement.GetAttribute("IsCustom").ToLowerInvariant() == "true");
+                                else Function.Call(Hash.SET_VEHICLE_MOD, car, (VehicleModType)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText), modelement.HasAttribute("IsCustom") && modelement.GetAttribute("IsCustom").ToLowerInvariant() == "true");
                             }
                         }
                     }
@@ -5777,7 +5821,8 @@ namespace ARS
                         //RandomTuning(car, false, true, true, true, false);
                     }
 
-                    foreach (XmlElement modelement in File.SelectNodes("//Mods/ToggleMod")) car.ToggleMod((VehicleToggleMod)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText) == 1 ? true : false);
+                    // foreach (XmlElement modelement in File.SelectNodes("//Mods/ToggleMod")) car.ToggleMod((VehicleToggleModType)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText) == 1 ? true : false);
+                    foreach (XmlElement modelement in File.SelectNodes("//Mods/ToggleMod")) Function.Call(Hash.TOGGLE_VEHICLE_MOD, car, (VehicleToggleModType)int.Parse(modelement.GetAttribute("ModIndex")), int.Parse(modelement.InnerText) == 1 ? true : false);
 
                     if (File.SelectNodes("//Extras/Extra").Count > 0) for (int i = 0; i < 15; i++) if (car.ExtraExists(i)) car.ToggleExtra(i, false);
                     foreach (XmlElement modelement in File.SelectNodes("//Extras/Extra")) car.ToggleExtra(int.Parse(modelement.InnerText), true);
@@ -5841,7 +5886,7 @@ namespace ARS
 
                     foreach (XmlElement e in DriverXML.SelectNodes("//Clothes/Prop"))
                     {
-                        // UI.Notify(e.GetAttribute("DrawableID"));
+                        // GTA.UI.Notification.Show(e.GetAttribute("DrawableID"));
                         int prop = int.Parse(e.GetAttribute("PropID"));
                         int texture = int.Parse(e.GetAttribute("TextureID"));
 
@@ -5887,31 +5932,31 @@ namespace ARS
             //result.Add(XMLFile);
 
             RaceStatus = RaceState.NotInitiated;
-            Function.Call(Hash._0x10D373323E5B9C0D);
+            Function.Call(Hash.BUSYSPINNER_OFF);
 
         }
 
 
         List<Vehicle> GetNearbyCandidates()
         {
-            return GlobalTraffic.Where(s => s.Health > 0 && s.IsDriveable && s.IsInRangeOf(Game.Player.Character.Position, 30f) && !CanWeUse(s.GetPedOnSeat(VehicleSeat.Driver))).ToList();
+            return GlobalTraffic.Where(s => s.Health > 0 && s.IsDriveable && s.IsInRange(Game.Player.Character.Position, 30f) && !CanWeUse(s.GetPedOnSeat(VehicleSeat.Driver))).ToList();
         }
         void CreateVehicle(Vehicle car, bool auto = false)
         {
 
             if (!CanWeUse(car))
             {
-                UI.Notify("~o~Weird error.~w~Car doesn't seem to exist, try reentering.");
+                Notification.Show("~o~Weird error.~w~Car doesn't seem to exist, try reentering.");
                 return;
             }
             string name = "";
-            if (auto) name = car.FriendlyName;
+            if (auto) name = car.LocalizedName;
             else
             {
-                UI.ShowSubtitle("~b~Enter your car's name, or leave empty to auto-generate one. ~w~~n~This will be the filename name.");
-                name = Game.GetUserInput(32);
+                Screen.ShowSubtitle("~b~Enter your car's name, or leave empty to auto-generate one. ~w~~n~This will be the filename name.");
+                name = GetUserInput(32);
             }
-            if (name == null || name == "") name = car.FriendlyName;
+            if (name == null || name == "") name = car.LocalizedName;
             if (name == null || name == "") name = car.DisplayName.ToString()[0].ToString().ToUpper() + car.DisplayName.ToString().Substring(1).ToLowerInvariant();
 
             string filePath = @"Scripts\ARS\Vehicles\" + name + ".xml";
@@ -5943,7 +5988,7 @@ namespace ARS
 
 
             XmlNode temp = XMLFile.CreateElement("Name");
-            temp.InnerText = car.FriendlyName;
+            temp.InnerText = car.LocalizedName;
             Vehicle.AppendChild(temp);
 
             XmlNode Class = XMLFile.CreateElement("Class");
@@ -5951,7 +5996,7 @@ namespace ARS
             Vehicle.AppendChild(Class);
 
             List<string> keywords = new List<string>();
-            string nameAutotag = car.FriendlyName;
+            string nameAutotag = car.LocalizedName;
 
             nameAutotag = nameAutotag.Replace(@"-", "");
             nameAutotag = nameAutotag.Replace(@"/", "");
@@ -5962,11 +6007,11 @@ namespace ARS
             keywords.Add(car.DisplayName);
             //keywords.AddRange(nameAutotag.Split(' '));
             keywords.Add(nameAutotag);
-            UI.ShowSubtitle("~b~Enter the vehicle's Class set.~w~~n~Write as much as you need, separate with spaces.");
+            GTA.UI.Screen.ShowSubtitle("~b~Enter the vehicle's Class set.~w~~n~Write as much as you need, separate with spaces.");
             if (!auto)
             {
 
-                string userTags = Game.GetUserInput(32);
+                string userTags = GetUserInput(32);
                 if (userTags != "") keywords.AddRange(userTags.Split(' '));
 
             }
@@ -5984,7 +6029,7 @@ namespace ARS
             Vehicle.AppendChild(temp);
 
             temp = XMLFile.CreateElement("Livery");
-            temp.InnerText = car.Livery.ToString();
+            temp.InnerText = car.Mods.Livery.ToString();
             Vehicle.AppendChild(temp);
 
             //Absolute acceleration, it iss affected by the engine power multiplier and its used to simulate further engine performance mods.
@@ -5997,34 +6042,34 @@ namespace ARS
 
 
             XmlAttribute vname = XMLFile.CreateAttribute("ModelName");
-            vname.InnerText = car.FriendlyName;
+            vname.InnerText = car.LocalizedName;
             if (vname.InnerText == "NULL") vname.InnerText = car.DisplayName;
             temp.Attributes.Append(vname);
 
             XmlElement Colors = XMLFile.CreateElement("Colors");
 
             XmlElement c = XMLFile.CreateElement("Primary");
-            c.InnerText = ((int)car.PrimaryColor).ToString();
+            c.InnerText = ((int)car.Mods.PrimaryColor).ToString();
             Colors.AppendChild(c);
 
             c = XMLFile.CreateElement("Secondary");
-            c.InnerText = ((int)car.SecondaryColor).ToString();
+            c.InnerText = ((int)car.Mods.SecondaryColor).ToString();
             Colors.AppendChild(c);
 
             c = XMLFile.CreateElement("Pearl");
-            c.InnerText = ((int)car.PearlescentColor).ToString();
+            c.InnerText = ((int)car.Mods.PearlescentColor).ToString();
             Colors.AppendChild(c);
 
             c = XMLFile.CreateElement("Wheel");
-            c.InnerText = ((int)car.RimColor).ToString();
+            c.InnerText = ((int)car.Mods.RimColor).ToString();
             Colors.AppendChild(c);
 
             c = XMLFile.CreateElement("Dash");
-            c.InnerText = ((int)car.DashboardColor).ToString();
+            c.InnerText = ((int)car.Mods.DashboardColor).ToString();
             Colors.AppendChild(c);
 
             c = XMLFile.CreateElement("Trim");
-            c.InnerText = ((int)car.TrimColor).ToString();
+            c.InnerText = ((int)car.Mods.TrimColor).ToString();
             Colors.AppendChild(c);
 
             Vehicle.AppendChild(Colors);
@@ -6054,7 +6099,7 @@ namespace ARS
                 }
             }
             XmlElement wheelkind = XMLFile.CreateElement("WheelType");
-            wheelkind.InnerText = ((int)car.WheelType).ToString();
+            wheelkind.InnerText = ((int)car.Mods.WheelType).ToString();
             Vehicle.AppendChild(wheelkind);
 
             for (int i = 0; i <= 100; i++)
@@ -6095,7 +6140,7 @@ namespace ARS
             XMLFile.AppendChild(Data);
 
             XMLFile.Save(@"scripts\\ARS\Vehicles\" + name + ".xml");
-            UI.ShowSubtitle("~b~Vehicle saved succesfully.~w~~n~Filename: ~g~" + name + ".xml");
+            GTA.UI.Screen.ShowSubtitle("~b~Vehicle saved succesfully.~w~~n~Filename: ~g~" + name + ".xml");
         }
 
         void CreateVehicleFromHash(VehicleHash h)
@@ -6104,7 +6149,7 @@ namespace ARS
 
             Log(LogImportance.Info, "Creating item from hash: " + h.ToString());
 
-            if (Function.Call<int>(Hash._0x2AD93716F184EDA4, (int)h) == 0)
+            if (Function.Call<int>(Hash.GET_VEHICLE_MODEL_NUMBER_OF_SEATS, (int)h) == 0)
             {
                 Log(LogImportance.Info, h.ToString() + " has no seats. Aborting this one.");
                 return;
@@ -6189,7 +6234,7 @@ namespace ARS
             XMLFile.AppendChild(Data);
 
             XMLFile.Save(@"scripts\\ARS\Vehicles\" + name + ".xml");
-            UI.ShowSubtitle("~b~Vehicle saved succesfully.~w~~n~Filename: ~g~" + name + ".xml");
+            GTA.UI.Screen.ShowSubtitle("~b~Vehicle saved succesfully.~w~~n~Filename: ~g~" + name + ".xml");
         }
 
         public static Vector3 Project(Vector3 pos, Vector3 dir, float mod, int m)

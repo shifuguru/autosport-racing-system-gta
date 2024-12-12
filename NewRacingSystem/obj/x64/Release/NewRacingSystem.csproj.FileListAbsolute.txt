@@ -40,3 +40,15 @@ D:\Mis Archivos\Codigo\GTAV\ARS\NewRacingSystem\obj\x64\Release\NewRacingSystem.
 D:\Mis Archivos\Codigo\GTAV\ARS\NewRacingSystem\obj\x64\Release\NewRacingSystem.csproj.CopyComplete
 D:\Mis Archivos\Codigo\GTAV\ARS\NewRacingSystem\obj\x64\Release\ARS.dll
 D:\Mis Archivos\Codigo\GTAV\ARS\NewRacingSystem\obj\x64\Release\ARS.pdb
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\obj\x64\Release\NewRacingSystem.csproj.AssemblyReference.cache
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\obj\x64\Release\NewRacingSystem.csproj.CoreCompileInputs.cache
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\obj\x64\Release\ARS.dll
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\obj\x64\Release\ARS.pdb
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\ARS.dll
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\ARS.pdb
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\LemonUI.SHVDN3.dll
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\ScriptHookVDotNet3.dll
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\LemonUI.SHVDN3.xml
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\ScriptHookVDotNet3.xml
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\obj\x64\Release\NewRacin.36AAA071.Up2Date
+F:\GTA5 scripts\Projects\autosport-racing-system-gta\NewRacingSystem\bin\x64\Release\iFruitAddon2.dll

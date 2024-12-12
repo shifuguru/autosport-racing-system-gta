@@ -52,8 +52,14 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ScriptHookVDotNet2">
-      <HintPath>E:\SteamLibrary\steamapps\common\Grand Theft Auto V\ScriptHookVDotNet2.dll</HintPath>
+    <Reference Include="iFruitAddon2">
+      <HintPath>..\..\..\sdk\iFruitAddon2.dll</HintPath>
+    </Reference>
+    <Reference Include="LemonUI.SHVDN3, Version=2.1.2.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\LemonUI.SHVDN3.2.1.2\lib\net48\LemonUI.SHVDN3.dll</HintPath>
+    </Reference>
+    <Reference Include="ScriptHookVDotNet3">
+      <HintPath>..\..\..\sdk\ScriptHookVDotNet3.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -68,15 +74,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataStructures.cs" />
+    <Compile Include="iFruitAddonHandler.cs" />
+    <Compile Include="LemonMenu.cs" />
     <Compile Include="PersonalitySet.cs" />
     <Compile Include="Racer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AutosportRacingSystem.cs" />
     <Compile Include="SkillSet.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <Compile Include="SettingsManager.cs" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>COPY "$(TargetDir)$(TargetFileName)" "E:\SteamLibrary\steamapps\common\Grand Theft Auto V\Scripts\ARS"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files\Rockstar Games\Grand Theft Auto V\scripts\ARS"
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
