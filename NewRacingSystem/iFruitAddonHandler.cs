@@ -41,7 +41,7 @@ namespace ARS
             contact.Answered += ContactAnswered;   // Linking the Answered event with our function
             contact.DialTimeout = 3000;            // Delay before answering
             contact.Active = true;                 // true = the contact is available and will answer the phone
-            contact.Icon = ContactIcon.Blank;      // Contact's icon
+            contact.Icon = ContactIcon.Hao;      // Contact's icon
             _iFruit.Contacts.Add(contact);         // Add the contact to the phone
         }
 

@@ -3,24 +3,28 @@
   "WorkspaceRootPath": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|f:\\gta5 scripts\\projects\\autosport-racing-system-gta\\newracingsystem\\ifruitaddonhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\ifruitaddonhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|f:\\gta5 scripts\\projects\\autosport-racing-system-gta\\newracingsystem\\settingsmanager.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\settingsmanager.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\newracingsystem\\autosportracingsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|f:\\gta5 scripts\\projects\\autosport-racing-system-gta\\newracingsystem\\autosportracingsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\autosportracingsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|f:\\gta5 scripts\\projects\\autosport-racing-system-gta\\newracingsystem\\lemonmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\lemonmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\newracingsystem\\settingsmanager.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\settingsmanager.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\newracingsystem\\racer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\racer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\newracingsystem\\ifruitaddonhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\ifruitaddonhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\newracingsystem\\lemonmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\lemonmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|f:\\gta5 scripts\\projects\\autosport-racing-system-gta\\newracingsystem\\datastructures.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF57EBD2-AD9B-4F82-89C1-FF70A3FE05A4}|NewRacingSystem\\NewRacingSystem.csproj|solutionrelative:newracingsystem\\datastructures.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,27 +34,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 8,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "iFruitAddonHandler.cs",
+              "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\iFruitAddonHandler.cs",
+              "RelativeDocumentMoniker": "NewRacingSystem\\iFruitAddonHandler.cs",
+              "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\iFruitAddonHandler.cs",
+              "RelativeToolTip": "NewRacingSystem\\iFruitAddonHandler.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAQwCsAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-06T01:05:46.228Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "LemonMenu.cs",
               "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\LemonMenu.cs",
               "RelativeDocumentMoniker": "NewRacingSystem\\LemonMenu.cs",
@@ -69,48 +70,65 @@
               "RelativeDocumentMoniker": "NewRacingSystem\\SettingsManager.cs",
               "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\SettingsManager.cs",
               "RelativeToolTip": "NewRacingSystem\\SettingsManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEcAAAAEAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-12-06T00:51:41.815Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "iFruitAddonHandler.cs",
-              "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\iFruitAddonHandler.cs",
-              "RelativeDocumentMoniker": "NewRacingSystem\\iFruitAddonHandler.cs",
-              "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\iFruitAddonHandler.cs",
-              "RelativeToolTip": "NewRacingSystem\\iFruitAddonHandler.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAjAAAAAAAAAA==",
+              "DocumentIndex": 5,
+              "Title": "DataStructures.cs",
+              "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\DataStructures.cs",
+              "RelativeDocumentMoniker": "NewRacingSystem\\DataStructures.cs",
+              "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\DataStructures.cs",
+              "RelativeToolTip": "NewRacingSystem\\DataStructures.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAANQAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-12-06T01:05:46.228Z",
+              "WhenOpened": "2024-12-09T08:14:17.361Z",
               "EditorCaption": ""
             },
             {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "AutosportRacingSystem.cs",
               "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\AutosportRacingSystem.cs",
               "RelativeDocumentMoniker": "NewRacingSystem\\AutosportRacingSystem.cs",
               "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\AutosportRacingSystem.cs",
               "RelativeToolTip": "NewRacingSystem\\AutosportRacingSystem.cs",
-              "ViewState": "AgIAAC4AAAAAAAAAAIAwwDoAAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAOgEAAAAAAAAAAAwwE4FAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-12-05T05:55:14.593Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 2,
               "Title": "Racer.cs",
               "DocumentMoniker": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\Racer.cs",
               "RelativeDocumentMoniker": "NewRacingSystem\\Racer.cs",
               "ToolTip": "F:\\GTA5 scripts\\Projects\\autosport-racing-system-gta\\NewRacingSystem\\Racer.cs",
               "RelativeToolTip": "NewRacingSystem\\Racer.cs",
-              "ViewState": "AgIAAFsEAAAAAAAAAADwv2wEAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAYwGwEAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-12-05T04:34:12.015Z"
+              "WhenOpened": "2024-12-05T04:34:12.015Z",
+              "EditorCaption": ""
             }
           ]
         }

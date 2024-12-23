@@ -12,7 +12,7 @@ namespace ARS
         public static float MaxSpeed = ARS.MPHtoMS(250f);
         public static float MinSpeed = ARS.MPHtoMS(5f);
 
-        public static float SpeedToInput(float spd, float tSpd, float scale=1f)
+        public static float SpeedToInput(float spd, float tSpd, float scale = 1f)
         {
             return (tSpd-spd) / scale;
         }
@@ -81,7 +81,7 @@ namespace ARS
             public float Speed;
             public Vector3 Direction;
             public float LookaheadDeviationFromCenter;
-            public float MaxSteerToDeviation=3;
+            public float MaxSteerToDeviation = 3;
             public float DeviationAvoidanceStrength;
             //Rivals
             public float Aggression;
@@ -97,7 +97,7 @@ namespace ARS
         public Racer RivalRacer = null;
         public RelativePos relativePos = RelativePos.Unreachable;
         public float Distance = 0;
-       public float sToReach = 0f;
+        public float sToReach = 0f;
         public float DirectionDiff = 0f;
         public Vector3 rPos = Vector3.Zero;
         Vector3 pVector = Vector3.Zero;
@@ -175,10 +175,7 @@ namespace ARS
         public float CurrentLockupLimiter = 1f;
 
         public float Brake = 1f;
-
         public int HandBrakeTime = 0;
-
-
     }
 
     /// <summary>
@@ -214,7 +211,6 @@ namespace ARS
         public float ElevationChange = 0f;
         public float Radius =0f;
         public bool IsKey = false;
-
         public int Length => LengthStart + LenghtEnd;
     }
 

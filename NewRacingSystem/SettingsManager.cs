@@ -17,7 +17,7 @@ namespace ARS
 		public static ScriptSettings settings = ScriptSettings.Load(settingsFilePath);
 		public static string log = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ARS", "ARS.log");
 		// Other Settings: 
-		public static Keys menuToggleKey = Keys.F10; // Use this Key to open the Mod's Menu. 
+		public static Keys menuToggleKey = Keys.F10; // Use this Key to open the Mod Menu
 
 		public static void CreateIni(string filePath)
 		{
@@ -32,7 +32,7 @@ namespace ARS
 			}
 		}
 
-
+		// LOAD:
 		public static void LoadSettings()
 		{
 			try
@@ -73,6 +73,7 @@ namespace ARS
             }
         }
 
+		// SAVE:
 		public static void SaveSettings()
         {
             try
@@ -105,6 +106,7 @@ namespace ARS
 			}
 
 		}
+
 		// EXCEPTION LOGGING: 
 		public static void LogException(string methodName, Exception ex)
 		{
